@@ -19,7 +19,7 @@ class StatusHandler(tornado.web.RequestHandler):
 
 
 class BaseServiceHandler(tornado.web.RequestHandler):
-    CHECKERS = [checker.check_spool]
+    CHECKERS = []
 
     @tornado.web.asynchronous
     @tornado.gen.coroutine
@@ -30,7 +30,7 @@ class BaseServiceHandler(tornado.web.RequestHandler):
             for checker in self.CHECKERS:
                 code, message = yield checker(service_name, port, query, io_loop=tornado.ioloop.IOLoop.instance())
                 last_message = message
-                if code > 500:
+                if code > 200:
                     self.set_status(code)
                     self.write(message)
                     self.finish()
@@ -39,6 +39,10 @@ class BaseServiceHandler(tornado.web.RequestHandler):
                 self.set_status(200)
                 self.write(last_message)
                 self.finish()
+
+
+class SpoolServiceHandler(BaseServiceHandler):
+    CHECKERS = [checker.check_spool]
 
 
 class HTTPServiceHandler(BaseServiceHandler):

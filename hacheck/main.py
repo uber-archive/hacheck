@@ -9,6 +9,15 @@ from . import handlers
 from . import spool
 
 
+def get_app():
+    return tornado.web.Application([
+        (r'/http/([a-zA-Z0-9]+)/([0-9]+)/(.*)', handlers.HTTPServiceHandler),
+        (r'/tcp/([a-zA-Z0-9]+)/([0-9]+)/?(.*)', handlers.TCPServiceHandler),
+        (r'/spool/([a-zA-Z0-9]+)/([0-9]+)/?(.*)', handlers.SpoolServiceHandler),
+        (r'/status', handlers.StatusHandler),
+    ], start_time=time.time())
+
+
 def main():
     parser = optparse.OptionParser()
     parser.add_option('-p', '--port', default=3333, type=int)
@@ -18,13 +27,9 @@ def main():
             help='Root for spool for service states (default %default)')
     opts, args = parser.parse_args()
     ioloop = tornado.ioloop.IOLoop.instance()
-    application = tornado.web.Application([
-        (r'/http/([a-zA-Z0-9]+)/([0-9]+)/(.*)', handlers.HTTPServiceHandler),
-        (r'/tcp/([a-zA-Z0-9]+)/([0-9]+)/(.*)', handlers.TCPServiceHandler),
-        (r'/status', handlers.StatusHandler),
-    ], start_time=time.time())
     cache.configure(cache_time=opts.cache_time)
     spool.configure(spool_root=opts.spool_root)
+    application = get_app()
     application.listen(opts.port)
     ioloop.start()
 
