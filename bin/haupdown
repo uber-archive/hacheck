@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+
+import optparse
+import sys
+
+import hacheck.spool
+
+
+def main():
+    ACTIONS = ('up', 'down', 'status')
+    parser = optparse.OptionParser(usage='%prog [options] service_name')
+    parser.add_option('--spool-root', default='/var/spool/hacheck',
+            help='Root for spool for service states (default %default)')
+    parser.add_option('-a', '--action', type='choice', choices=ACTIONS,
+            help='Action (one of %s)' % ', '.join(ACTIONS))
+    parser.add_option('-r', '--reason', type=str, default="", help='Reason string when setting down')
+    opts, args = parser.parse_args()
+
+    if len(args) != 1:
+        parser.error('Wrong number of arguments')
+    service_name = args[0]
+
+    hacheck.spool.configure(opts.spool_root)
+
+    if opts.action == 'up':
+        hacheck.spool.up(service_name)
+        return 0
+    elif opts.action == 'down':
+        hacheck.spool.down(service_name, opts.reason)
+        return 0
+    else:
+        status, info = hacheck.spool.status(service_name)
+        if status:
+            print 'UP'
+            return 0
+        else:
+            print 'DOWN\t%s' % info['reason']
+            return 1
+
+
+if __name__ == '__main__':
+    sys.exit(main())

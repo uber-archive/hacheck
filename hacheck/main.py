@@ -14,7 +14,7 @@ def main():
     parser.add_option('-p', '--port', default=3333, type=int)
     parser.add_option('--cache-time', default=10.0, type=float,
             help='How many seconds to cache response for (default %default)')
-    parser.add_option('--spool-root', default='/var/spool/hastate',
+    parser.add_option('--spool-root', default='/var/spool/hacheck',
             help='Root for spool for service states (default %default)')
     opts, args = parser.parse_args()
     ioloop = tornado.ioloop.IOLoop.instance()

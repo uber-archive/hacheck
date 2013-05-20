@@ -19,18 +19,29 @@ def is_up(service_name):
 
     :returns: (bool of service status, dict of extra information)
     """
-    all_file = os.path.join(config['spool_root'], "all")
-    this_file = os.path.join(config['spool_root'], service_name)
+    all_up, all_info = status("all")
+    if all_up:
+        return status(service_name)
+    else:
+        return all_up, all_info
+
+
+def up(service_name):
     try:
-        with open(all_file, 'r') as f:
-            return False, {"service": "all", "reason": f.read()}
-    except IOError:
-        # if we get an exception, "all" is up
+        os.unlink(os.path.join(config['spool_root'], service_name))
+    except OSError:
         pass
 
+
+def down(service_name, reason=""):
+    with open(os.path.join(config['spool_root'], service_name), 'w') as f:
+        f.write(reason)
+
+
+def status(service_name):
     try:
-        with open(this_file, 'r') as f:
-            return False, {"service": service_name, "reason": f.read()}
+        with open(os.path.join(config['spool_root'], service_name), 'r') as f:
+            reason = f.read()
+            return False, {'service': service_name, 'reason': reason}
     except IOError:
-        # if we get an exception, then so is this service
-        return True, {}
+        return True, {'service': service_name, 'reason': ''}
