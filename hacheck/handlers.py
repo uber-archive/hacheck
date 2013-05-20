@@ -1,5 +1,6 @@
 import time
 
+import tornado.ioloop
 import tornado.httpclient
 import tornado.gen
 import tornado.web
@@ -27,7 +28,7 @@ class BaseServiceHandler(tornado.web.RequestHandler):
             port = int(port)
             last_message = ""
             for checker in self.CHECKERS:
-                code, message = yield checker(service_name, port, query)
+                code, message = yield checker(service_name, port, query, io_loop=tornado.ioloop.IOLoop.instance())
                 last_message = message
                 if code > 500:
                     self.set_status(code)

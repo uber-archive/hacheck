@@ -11,34 +11,42 @@ from . import cache
 from . import spool
 from . import __version__
 
-TIMEOUT = 1
+TIMEOUT = 10
 
 
+# Do not cache spool checks
 @tornado.concurrent.return_future
-def check_spool(service_name, port, _, callback):
+def check_spool(service_name, port, query, io_loop, callback):
     up, extra_info = spool.is_up(service_name)
     if not up:
-        info_string = 'Service %s in down state: %s' % (extra_info['service'], extra_info['reason'])
+        info_string = 'Service %s in down state: %s' % (extra_info['service'], extra_info.get('reason', ''))
         callback((503, info_string))
     else:
-        callback((200, extra_info['reason']))
+        callback((200, extra_info.get('reason', '')))
 
 
 # IMPORTANT: the gen.coroutine decorator needs to be the innermost
 @cache.cached
 @tornado.gen.coroutine
-def check_http(service_name, port, query):
-    request = tornado.httpclient.HTTPRequest('http://127.0.0.1:%d/%s' % (port, query), method='GET',
+def check_http(service_name, port, query, io_loop):
+    if not query.startswith("/"):
+        query = "/" + query
+    request = tornado.httpclient.HTTPRequest('http://127.0.0.1:%d%s' % (port, query), method='GET',
             headers={'User-Agent': 'hastate %s' % (__version__)}, request_timeout=TIMEOUT)
-    http_client = tornado.httpclient.AsyncHTTPClient()
-    response = yield http_client.fetch(request)
-    value = (response.code, response.body)
-    raise tornado.gen.Return((value[0], value[1]))
+    http_client = tornado.httpclient.AsyncHTTPClient(ioloop=io_loop)
+    try:
+        response = yield http_client.fetch(request)
+        code = response.code
+        reason = response.body
+    except tornado.httpclient.HTTPError as exc:
+        code = exc.code
+        reason = exc.response.body if exc.response else ""
+    raise tornado.gen.Return((code, reason))
 
 
 @cache.cached
 @tornado.gen.coroutine
-def check_tcp(service_name, port, _):
+def check_tcp(service_name, port, query, io_loop):
     stream = None
     connect_start = time.time()
 
@@ -50,10 +58,9 @@ def check_tcp(service_name, port, _):
         raise tornado.gen.Return((503, 'Connection timed out after %.2fs' % (time.time() - connect_start)))
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
-    ioloop = tornado.ioloop.IOLoop.instance()
-    stream = tornado.iostream.IOStream(s, io_loop=ioloop)
-    timeout = tornado.ioloop.IOLoop.instance().add_timeout(datetime.timedelta(seconds=TIMEOUT), timed_out)
+    stream = tornado.iostream.IOStream(s, io_loop=io_loop)
+    timeout = io_loop.add_timeout(datetime.timedelta(seconds=TIMEOUT), timed_out)
     yield tornado.gen.Task(stream.connect, ("127.0.0.1", port))
-    ioloop.remove_timeout(timeout)
+    io_loop.remove_timeout(timeout)
     stream.close()
     raise tornado.gen.Return((200, 'Connected in %.2fs' % (time.time() - connect_start)))
