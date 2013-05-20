@@ -80,3 +80,13 @@ class ApplicationTestCase(tornado.testing.AsyncHTTPTestCase):
             response = self.fetch('/spool/foo/2/status')
             self.assertEqual(404, response.code)
             self.assertEqual('NOK2', response.body)
+
+    def test_option_parsing(self):
+        with mock.patch('sys.argv', ['ignorethis', '--cache-time', '100.0', '--spool-root', 'foo']),\
+                mock.patch.object(tornado.ioloop.IOLoop, 'instance'),\
+                mock.patch.object(cache, 'configure') as cache_configure,\
+                mock.patch.object(main, 'get_app'),\
+                mock.patch.object(spool, 'configure') as spool_configure:
+            main.main()
+            spool_configure.assert_called_once_with(spool_root='foo')
+            cache_configure.assert_called_once_with(cache_time=100)

@@ -26,11 +26,11 @@ def main():
     parser.add_option('--spool-root', default='/var/spool/hacheck',
             help='Root for spool for service states (default %default)')
     opts, args = parser.parse_args()
-    ioloop = tornado.ioloop.IOLoop.instance()
     cache.configure(cache_time=opts.cache_time)
     spool.configure(spool_root=opts.spool_root)
     application = get_app()
     application.listen(opts.port)
+    ioloop = tornado.ioloop.IOLoop.instance()
     ioloop.start()
 
 
