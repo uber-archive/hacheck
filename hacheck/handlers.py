@@ -5,7 +5,6 @@ import tornado.gen
 import tornado.web
 
 from . import cache
-from . import spool
 from . import checker
 
 
@@ -18,18 +17,32 @@ class StatusHandler(tornado.web.RequestHandler):
         self.write(stats)
 
 
-class ServiceHandler(tornado.web.RequestHandler):
+class BaseServiceHandler(tornado.web.RequestHandler):
+    CHECKERS = [checker.check_spool]
+
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def get(self, service_name, port, query):
-        port = int(port)
-        up, extra_info = spool.is_up(service_name)
-        if not up:
-            info_string = "Service %s in down state: %s" % (extra_info["service"], extra_info["reason"])
-            self.write(info_string)
-            self.set_status(503)
-        else:
-            code, message = yield checker.check(service_name, port, query, self.request)
-            self.set_status(code)
-            self.write(message)
-            self.finish()
+        with cache.maybe_bust(self.request.headers.get('Pragma', '') == 'no-cache'):
+            port = int(port)
+            last_message = ""
+            for checker in self.CHECKERS:
+                code, message = yield checker(service_name, port, query)
+                last_message = message
+                if code > 500:
+                    self.set_status(code)
+                    self.write(message)
+                    self.finish()
+                    break
+            else:
+                self.set_status(200)
+                self.write(last_message)
+                self.finish()
+
+
+class HTTPServiceHandler(BaseServiceHandler):
+    CHECKERS = [checker.check_spool, checker.check_http]
+
+
+class TCPServiceHandler(BaseServiceHandler):
+    CHECKERS = [checker.check_spool, checker.check_tcp]

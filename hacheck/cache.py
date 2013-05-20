@@ -1,19 +1,18 @@
 import contextlib
 import copy
+import functools
 import time
 from collections import Counter
-from collections import OrderedDict
+from collections import namedtuple
 
-_cache = OrderedDict()
-
-_make_key = lambda *args: tuple(args)
+_cache = {}
 
 config = {
     'cache_time': 10,
     'ignore_cache': False,
 }
 
-stats = Counter({
+default_stats = Counter({
     'expirations': 0,
     'sets': 0,
     'gets': 0,
@@ -21,40 +20,56 @@ stats = Counter({
     'misses': 0
 })
 
+stats = Counter()
 
-def configure(cache_time):
+Key = namedtuple('Key', ['original_key'])
+Record = namedtuple('Record', ['expiry', 'value'])
+
+
+def configure(cache_time=config['cache_time']):
+    """Configure the cache and reset its values"""
     config['cache_time'] = cache_time
+    stats.clear()
+    stats.update(default_stats)
+    _cache.clear()
 
 
-def get(service, port, query, now):
+def has_expired(record, now):
+    if record.expiry < now:
+        return True
+    else:
+        return False
+
+
+def getv(key, now=None):
     """Get a key from the cache
 
-    :param service: The name of the service
-    :param port: The port the service is listening on
-    :param query: The query string
     :param now: The current time
     :raises: KeyError if the key is not present or has expired
     :returns: The result
     """
-    key = _make_key(service, port, query)
+    if now is None:
+        now = time.time()
+    key = Key(key)
     stats['gets'] += 1
     if key in _cache:
-        expiry, result = _cache[key]
-        if expiry >= now and not config['ignore_cache']:
-            stats['hits'] += 1
-            return result
-        else:
+        record = _cache[key]
+        if has_expired(record, now) or config['ignore_cache']:
             stats['expirations'] += 1
             del _cache[key]
+        else:
+            stats['hits'] += 1
+            return record.value
     stats['misses'] += 1
     raise KeyError(key)
 
 
-def set(service, port, query, value):
-    key = _make_key(service, port, query)
+def setv(key, value):
+    key = Key(key)
     stats['sets'] += 1
     expiration_time = time.time() + config['cache_time']
-    _cache[key] = (expiration_time, value)
+    rec = Record(expiration_time, value)
+    _cache[key] = rec
 
 
 def get_stats():
@@ -67,3 +82,17 @@ def maybe_bust(bust_or_not):
     config['ignore_cache'] = bust_or_not
     yield
     config['ignore_cache'] = previous_state
+
+
+def cached(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        now = time.time()
+        key = tuple([func.__name__, args])
+        try:
+            response = getv(key, now)
+        except KeyError:
+            response = func(*args, **kwargs)
+            setv(key, response)
+        return response
+    return wrapper

@@ -19,7 +19,8 @@ def main():
     opts, args = parser.parse_args()
     ioloop = tornado.ioloop.IOLoop.instance()
     application = tornado.web.Application([
-        (r'/([a-zA-Z0-9]+)/([0-9]+)/(.*)', handlers.ServiceHandler),
+        (r'/http/([a-zA-Z0-9]+)/([0-9]+)/(.*)', handlers.HTTPServiceHandler),
+        (r'/tcp/([a-zA-Z0-9]+)/([0-9]+)/(.*)', handlers.TCPServiceHandler),
         (r'/status', handlers.StatusHandler),
     ], start_time=time.time())
     cache.configure(cache_time=opts.cache_time)
