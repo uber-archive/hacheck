@@ -1,0 +1,5 @@
+# Mocking stuff
+mock==1.0.1
+# Running tests
+nose==1.3.0
+nose-cov==1.6

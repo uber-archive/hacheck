@@ -10,7 +10,6 @@ with open('requirements.txt') as f:
 
 setup(
     name="hacheck",
-    scripts=["bin/haup", "bin/hadown", "bin/haupdown"],
     version=hacheck.__version__,
     author="James Brown",
     author_email="jbrown@uber.com",
@@ -21,6 +20,12 @@ setup(
     description="HAProxy health-check proxying service",
     install_requires=required,
     test_suite="nose.collector",
+    entry_points={
+        'console_scripts': [
+            'haup = hacheck.haupdown:up',
+            'hadown = hacheck.haupdown:down',
+        ]
+    },
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Web Environment",

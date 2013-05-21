@@ -30,7 +30,7 @@ def check_spool(service_name, port, query, io_loop, callback):
 @tornado.gen.coroutine
 def check_http(service_name, port, query, io_loop):
     if not query.startswith("/"):
-        query = "/" + query
+        query = "/" + query  # pragma: no cover
     request = tornado.httpclient.HTTPRequest('http://127.0.0.1:%d%s' % (port, query), method='GET',
             headers={'User-Agent': 'hastate %s' % (__version__)}, request_timeout=TIMEOUT)
     http_client = tornado.httpclient.AsyncHTTPClient(ioloop=io_loop)
@@ -53,7 +53,7 @@ def check_tcp(service_name, port, query, io_loop):
     def timed_out():
         try:
             stream.close()
-        except:
+        except:  # pragma: no cover
             pass
         raise tornado.gen.Return((503, 'Connection timed out after %.2fs' % (time.time() - connect_start)))
 
