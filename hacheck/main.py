@@ -11,9 +11,9 @@ from . import spool
 
 def get_app():
     return tornado.web.Application([
-        (r'/http/([a-zA-Z0-9]+)/([0-9]+)/(.*)', handlers.HTTPServiceHandler),
-        (r'/tcp/([a-zA-Z0-9]+)/([0-9]+)/?(.*)', handlers.TCPServiceHandler),
-        (r'/spool/([a-zA-Z0-9]+)/([0-9]+)/?(.*)', handlers.SpoolServiceHandler),
+        (r'/http/([a-zA-Z0-9_-]+)/([0-9]+)/(.*)', handlers.HTTPServiceHandler),
+        (r'/tcp/([a-zA-Z0-9_-]+)/([0-9]+)/?(.*)', handlers.TCPServiceHandler),
+        (r'/spool/([a-zA-Z0-9_-]+)/([0-9]+)/?(.*)', handlers.SpoolServiceHandler),
         (r'/status', handlers.StatusHandler),
     ], start_time=time.time())
 
