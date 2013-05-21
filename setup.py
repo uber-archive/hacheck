@@ -24,6 +24,7 @@ setup(
         'console_scripts': [
             'haup = hacheck.haupdown:up',
             'hadown = hacheck.haupdown:down',
+            'hastatus = hacheck.haupdown:status',
         ]
     },
     classifiers=[

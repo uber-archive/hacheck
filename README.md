@@ -7,8 +7,9 @@ This will check the following locations for service state:
  * `/var/spool/hacheck/all`
  * `/var/spool/hacheck/<service_name>`
  * Depending on the value of `<protocol>`:
-  * if `<http>`: `http://localhost:<port>/<query>`
-  * if `<tcp>`: Will attempt to connect to port `<port>` on localhost. `<query>` is currently ignored
+  * if `http`: `http://localhost:<port>/<query>`
+  * if `tcp`: will attempt to connect to port `<port>` on localhost. `<query>` is currently ignored
+  * if `spool`: will only check the spool state
 
 When it does query the actual service check endpoint, **hacheck** MAY cache the value of that query
 for up to 15 seconds.
