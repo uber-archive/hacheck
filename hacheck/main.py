@@ -1,4 +1,6 @@
+import logging
 import optparse
+import signal
 import time
 
 import tornado.ioloop
@@ -25,12 +27,16 @@ def main():
             help='How many seconds to cache response for (default %default)')
     parser.add_option('--spool-root', default='/var/spool/hacheck',
             help='Root for spool for service states (default %default)')
+    parser.add_option('-v', '--verbose', default=False, action='store_true')
     opts, args = parser.parse_args()
+    logging.basicConfig(level=(logging.DEBUG if opts.verbose else logging.WARNING))
     cache.configure(cache_time=opts.cache_time)
     spool.configure(spool_root=opts.spool_root)
     application = get_app()
     application.listen(opts.port)
     ioloop = tornado.ioloop.IOLoop.instance()
+    for sig in (signal.SIGTERM, signal.SIGQUIT, signal.SIGINT):
+        signal.signal(sig, lambda *args: ioloop.stop())
     ioloop.start()
 
 
