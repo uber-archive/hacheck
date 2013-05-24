@@ -25,7 +25,7 @@ setup(
             'haup = hacheck.haupdown:up',
             'hadown = hacheck.haupdown:down',
             'hastatus = hacheck.haupdown:status',
-            'hacheck = hacheck.main.main',
+            'hacheck = hacheck.main:main',
         ]
     },
     classifiers=[
