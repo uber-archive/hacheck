@@ -43,6 +43,10 @@ class TestIntegration(tornado.testing.AsyncHTTPTestCase):
         ])
         return hacheck_app
 
+    def test_selfie(self):
+        response = self.fetch('/http/self/%d/status' % self.get_http_port())
+        self.assertEqual(200, response.code)
+
     def test_ping(self):
         response = self.fetch('/http/test_app/%d/pinged' % self.get_http_port())
         self.assertEqual(200, response.code)

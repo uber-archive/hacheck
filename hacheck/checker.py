@@ -33,7 +33,7 @@ def check_http(service_name, port, query, io_loop):
         query = "/" + query  # pragma: no cover
     request = tornado.httpclient.HTTPRequest('http://127.0.0.1:%d%s' % (port, query), method='GET',
             headers={'User-Agent': 'hastate %s' % (__version__)}, request_timeout=TIMEOUT)
-    http_client = tornado.httpclient.AsyncHTTPClient(ioloop=io_loop)
+    http_client = tornado.httpclient.AsyncHTTPClient(io_loop=io_loop)
     try:
         response = yield http_client.fetch(request)
         code = response.code

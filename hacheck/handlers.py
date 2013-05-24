@@ -28,7 +28,7 @@ class BaseServiceHandler(tornado.web.RequestHandler):
             port = int(port)
             last_message = ""
             for checker in self.CHECKERS:
-                code, message = yield checker(service_name, port, query, io_loop=tornado.ioloop.IOLoop.instance())
+                code, message = yield checker(service_name, port, query, io_loop=tornado.ioloop.IOLoop.current())
                 last_message = message
                 if code > 200:
                     self.set_status(code)
