@@ -5,10 +5,11 @@ config = {
 }
 
 
-def configure(spool_root):
+def configure(spool_root, needs_write=False):
+    access_required = os.W_OK | os.R_OK if needs_write else os.R_OK
     if os.path.exists(spool_root):
-        if not os.access(spool_root, os.W_OK):
-            raise ValueError("No write access to %s" % spool_root)
+        if not os.access(spool_root, access_required):
+            raise ValueError("Insufficient access to %s" % spool_root)
     else:
         os.mkdir(spool_root, 0750)
     config['spool_root'] = spool_root

@@ -25,7 +25,13 @@ class TestSpool(TestCase):
         new_root = os.path.join(self.root, 'non_writable')
         os.mkdir(new_root)
         os.chmod(new_root, 0555)
-        self.assertRaises(ValueError, spool.configure, new_root)
+        self.assertRaises(ValueError, spool.configure, new_root, needs_write=True)
+
+    def test_configure_no_write_no_needs_write(self):
+        new_root = os.path.join(self.root, 'non_writable')
+        os.mkdir(new_root)
+        os.chmod(new_root, 0555)
+        spool.configure(new_root, needs_write=False)
 
     def test_basic(self):
         svcname = 'test_basic'

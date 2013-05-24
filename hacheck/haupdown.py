@@ -32,7 +32,7 @@ def main(default_action='status'):
         parser.error('Wrong number of arguments')
     service_name = args[0]
 
-    hacheck.spool.configure(opts.spool_root)
+    hacheck.spool.configure(opts.spool_root, needs_write=True)
 
     if opts.action == 'up':
         hacheck.spool.up(service_name)
