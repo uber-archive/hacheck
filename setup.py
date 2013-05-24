@@ -15,7 +15,7 @@ setup(
     author_email="jbrown@uber.com",
     url="https://github.com/uber/hacheck",
     license="Proprietary",
-    packages=find_packages(),
+    packages=find_packages(exclude=['tests']),
     keywords=["monitoring", "load-balancing", "networking"],
     description="HAProxy health-check proxying service",
     install_requires=required,
