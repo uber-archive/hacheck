@@ -41,7 +41,11 @@ class ApplicationTestCase(tornado.testing.AsyncHTTPTestCase):
         with mock.patch.object(spool, 'is_up', return_value=(False, {"service": "any", "reason": ""})):
             response = self.fetch('/spool/foo/1/status')
             self.assertEqual(response.code, 503)
-            self.assertEqual(response.body, "Service any in down state: ")
+            self.assertEqual(response.body, "Service any in down state")
+        with mock.patch.object(spool, 'is_up', return_value=(False, {"service": "any", "reason": "just because"})):
+            response = self.fetch('/spool/foo/1/status')
+            self.assertEqual(response.code, 503)
+            self.assertEqual(response.body, "Service any in down state: just because")
 
     def test_calls_all_checkers(self):
         rv1 = tornado.concurrent.Future()

@@ -19,7 +19,9 @@ TIMEOUT = 10
 def check_spool(service_name, port, query, io_loop, callback):
     up, extra_info = spool.is_up(service_name)
     if not up:
-        info_string = 'Service %s in down state: %s' % (extra_info['service'], extra_info.get('reason', ''))
+        info_string = 'Service %s in down state' % (extra_info['service'],)
+        if extra_info.get('reason', ''):
+            info_string += ": %s" % extra_info['reason']
         callback((503, info_string))
     else:
         callback((200, extra_info.get('reason', '')))
