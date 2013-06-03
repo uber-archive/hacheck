@@ -49,6 +49,11 @@ class TestSpool(TestCase):
         self.assertEquals(True, spool.status(svcname)[0])
         self.assertEquals(False, spool.is_up(svcname)[0])
 
+    def test_status_all_down(self):
+        self.assertEqual(len(list(spool.status_all_down())), 0)
+        spool.down('foo')
+        self.assertEqual(list(spool.status_all_down()), [('foo', {'service': 'foo', 'reason': ''})])
+
     def test_repeated_ups_works(self):
         spool.up('all')
         spool.up('all')

@@ -42,6 +42,17 @@ def status(service_name):
         return True, {'service': service_name, 'reason': ''}
 
 
+def status_all_down():
+    """List all down services
+
+    :returns: Iterable of pairs of (service name, dict of extra information)
+    """
+    for service_name in os.listdir(config['spool_root']):
+        up, info = status(service_name)
+        if not up:
+            yield service_name, info
+
+
 def up(service_name):
     try:
         os.unlink(os.path.join(config['spool_root'], service_name))
