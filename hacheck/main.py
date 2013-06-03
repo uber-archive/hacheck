@@ -2,6 +2,7 @@ import logging
 import optparse
 import signal
 import time
+import sys
 
 import tornado.ioloop
 import tornado.web
@@ -38,7 +39,8 @@ def main():
     for sig in (signal.SIGTERM, signal.SIGQUIT, signal.SIGINT):
         signal.signal(sig, lambda *args: ioloop.stop())
     ioloop.start()
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
