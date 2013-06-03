@@ -85,6 +85,15 @@ class ApplicationTestCase(tornado.testing.AsyncHTTPTestCase):
             self.assertEqual(404, response.code)
             self.assertEqual('NOK2', response.body)
 
+    def test_weird_code(self):
+        # test that unusual HTTP codes are rewritten to 503s
+        rv = tornado.concurrent.Future()
+        rv.set_result((6000, 'this code is weird'))
+        checker = mock.Mock(return_value=rv)
+        with mock.patch.object(handlers.HTTPServiceHandler, 'CHECKERS', [checker]):
+            response = self.fetch('/http/uncached-weird-code/80/status')
+            self.assertEqual(503, response.code)
+
     def test_option_parsing(self):
         with mock.patch('sys.argv', ['ignorethis', '--cache-time', '100.0', '--spool-root', 'foo']),\
                 mock.patch.object(tornado.ioloop.IOLoop, 'instance'),\

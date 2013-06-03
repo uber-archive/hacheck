@@ -18,7 +18,7 @@ class ReturnTwoHundred(tornado.web.RequestHandler):
 
 class ReturnFiveOhOne(tornado.web.RequestHandler):
     def get(self):
-        self.set_status(401)
+        self.set_status(501)
         self.write("NOPE")
 
 
@@ -38,6 +38,7 @@ class TestChecker(TestCase):
 
 
 class TestHTTPChecker(tornado.testing.AsyncHTTPTestCase):
+
     def get_app(self):
         return tornado.web.Application([
             ('/', ReturnTwoHundred),
@@ -62,7 +63,7 @@ class TestHTTPChecker(tornado.testing.AsyncHTTPTestCase):
 
     def test_check_failure_with_code(self):
         def success(fut):
-            self.assertEqual(401, fut.result()[0])
+            self.assertEqual(501, fut.result()[0])
             self.stop()
         future = checker.check_http("foo", self.get_http_port(), "/bip", io_loop=self.io_loop)
         future.add_done_callback(success)
