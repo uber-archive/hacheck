@@ -14,7 +14,7 @@ setup(
     author="James Brown",
     author_email="jbrown@uber.com",
     url="https://github.com/uber/hacheck",
-    license="Proprietary",
+    license="MIT",
     packages=find_packages(exclude=['tests']),
     keywords=["monitoring", "load-balancing", "networking"],
     description="HAProxy health-check proxying service",
@@ -35,6 +35,7 @@ setup(
         "Programming Language :: Python :: 2.7",
         "Intended Audience :: Developers",
         "Operating System :: OS Independent",
+        "License :: OSI Approved :: MIT License",
         "Topic :: System :: Monitoring",
     ]
 )

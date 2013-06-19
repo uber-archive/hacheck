@@ -22,3 +22,7 @@ When it does query the actual service check endpoint, **hacheck** MAY cache the 
 ### Use cases
 
 Imagine you want to take down the server `web01` for maintenance. Just SSH to it, then (as root) run `hadown all` and wait however long your HAproxy healthchecking interval is. Do your maintenance, then run `haup all` to put it back in service. So easy!
+
+### License
+
+This work is licensed under the [MIT License](http://opensource.org/licenses/MIT), the contents of which can be found at [LICENSE.txt](LICENSE.txt).
