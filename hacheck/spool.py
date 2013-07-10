@@ -11,7 +11,7 @@ def configure(spool_root, needs_write=False):
         if not os.access(spool_root, access_required):
             raise ValueError("Insufficient access to %s" % spool_root)
     else:
-        os.mkdir(spool_root, 0750)
+        os.mkdir(spool_root, 0o750)
     config['spool_root'] = spool_root
 
 

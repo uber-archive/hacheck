@@ -13,13 +13,13 @@ se = mock.sentinel
 
 class ReturnTwoHundred(tornado.web.RequestHandler):
     def get(self):
-        self.write("TEST OK")
+        self.write(b'TEST OK')
 
 
 class ReturnFiveOhOne(tornado.web.RequestHandler):
     def get(self):
         self.set_status(501)
-        self.write("NOPE")
+        self.write(b'NOPE')
 
 
 class TestChecker(TestCase):
@@ -47,7 +47,7 @@ class TestHTTPChecker(tornado.testing.AsyncHTTPTestCase):
 
     def test_check_success(self):
         def success(fut):
-            self.assertEqual((200, "TEST OK"), fut.result())
+            self.assertEqual((200, b'TEST OK'), fut.result())
             self.stop()
         future = checker.check_http("foo", self.get_http_port(), "/", io_loop=self.io_loop)
         future.add_done_callback(success)
