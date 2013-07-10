@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/uber/hacheck.png)](https://travis-ci.org/uber/hacheck)
+
 **hacheck** is a healthcheck-proxying service. It listens on port 3333, speaks HTTP, and has the following API:
 
     GET /<protocol>/<service_name>/<port>/<query>
