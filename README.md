@@ -21,6 +21,8 @@ When it does query the actual service check endpoint, **hacheck** MAY cache the 
 
 **hacheck** is written in Python and makes extensive use of the [tornado](http://www.tornadoweb.org/en/stable/) asynchronous web framework (specifically, it uses the coroutine stuff in Tornado 3). Unit tests use nose and mock.
 
+It runs on Python 2.7 and above, as well as Python 3.2 and above.
+
 ### Use cases
 
 Imagine you want to take down the server `web01` for maintenance. Just SSH to it, then (as root) run `hadown all` and wait however long your HAproxy healthchecking interval is. Do your maintenance, then run `haup all` to put it back in service. So easy!
