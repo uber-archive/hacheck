@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import optparse
 import sys
 
@@ -24,7 +26,7 @@ def status_all():
 
 def print_s(fmt_string, *formats):
     """Print function split out for mocking"""
-    print fmt_string % formats
+    print(fmt_string % formats)
 
 
 def main(default_action='status'):

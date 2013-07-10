@@ -1,3 +1,4 @@
+import logging
 import time
 
 import tornado.ioloop
@@ -8,6 +9,8 @@ import tornado.web
 
 from . import cache
 from . import checker
+
+log = logging.getLogger('hacheck')
 
 
 class StatusHandler(tornado.web.RequestHandler):
