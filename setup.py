@@ -1,12 +1,31 @@
 #!/usr/bin/env python
+import collections
+
 from setuptools import setup, find_packages
+from pip.req import parse_requirements
 
 import hacheck
 
 
-with open('requirements.txt') as f:
-    required = f.read().splitlines()
+def get_install_requirements():
 
+    ReqOpts = collections.namedtuple('ReqOpts', ['skip_requirements_regex', 'default_vcs'])
+
+    opts = ReqOpts(None, 'git')
+
+    requires = []
+    dependency_links = []
+
+    for ir in parse_requirements('requirements.txt', options=opts):
+        if ir is not None:
+            if ir.url is not None:
+                dependency_links.append(str(ir.url))
+            if ir.req is not None:
+                requires.append(str(ir.req))
+    return requires, dependency_links
+
+
+install_requires, dependency_links = get_install_requirements()
 
 setup(
     name="hacheck",
@@ -18,7 +37,8 @@ setup(
     packages=find_packages(exclude=['tests']),
     keywords=["monitoring", "load-balancing", "networking"],
     description="HAProxy health-check proxying service",
-    install_requires=required,
+    install_requires=install_requires,
+    dependency_links = dependency_links,
     test_suite="nose.collector",
     entry_points={
         'console_scripts': [
