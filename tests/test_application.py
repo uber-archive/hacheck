@@ -1,5 +1,7 @@
 import json
 
+from hacheck.compat import nested
+
 import mock
 import tornado.concurrent
 import tornado.testing
@@ -95,11 +97,11 @@ class ApplicationTestCase(tornado.testing.AsyncHTTPTestCase):
             self.assertEqual(503, response.code)
 
     def test_option_parsing(self):
-        with mock.patch('sys.argv', ['ignorethis', '--cache-time', '100.0', '--spool-root', 'foo']),\
-                mock.patch.object(tornado.ioloop.IOLoop, 'instance'),\
-                mock.patch.object(cache, 'configure') as cache_configure,\
-                mock.patch.object(main, 'get_app'),\
-                mock.patch.object(spool, 'configure') as spool_configure:
+        with nested(mock.patch('sys.argv', ['ignorethis', '--cache-time', '100.0', '--spool-root', 'foo']),
+                mock.patch.object(tornado.ioloop.IOLoop, 'instance'),
+                mock.patch.object(cache, 'configure'),
+                mock.patch.object(main, 'get_app'),
+                mock.patch.object(spool, 'configure')) as (_1, _2, cache_configure, _3, spool_configure):
             main.main()
             spool_configure.assert_called_once_with(spool_root='foo')
             cache_configure.assert_called_once_with(cache_time=100)

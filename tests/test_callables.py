@@ -1,4 +1,5 @@
 import contextlib
+from hacheck.compat import nested
 
 import mock
 from unittest import TestCase
@@ -13,9 +14,11 @@ sentinel_service_name = 'testing_service_name'
 class TestCallable(TestCase):
     @contextlib.contextmanager
     def setup_wrapper(self, args=frozenset()):
-        with mock.patch.object(hacheck, 'spool', return_value=(True, {})) as mock_spool,\
-                mock.patch.object(hacheck.haupdown, 'print_s') as mock_print,\
-                mock.patch('sys.argv', ['ignored', sentinel_service_name] + list(args)):
+        with nested(
+                mock.patch.object(hacheck, 'spool', return_value=(True, {})),
+                mock.patch.object(hacheck.haupdown, 'print_s'),
+                mock.patch('sys.argv', ['ignored', sentinel_service_name] + list(args))
+        ) as (mock_spool, mock_print, _1):
             yield mock_spool, mock_print
 
     def test_basic(self):

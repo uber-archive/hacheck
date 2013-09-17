@@ -2,7 +2,10 @@ import contextlib
 import copy
 import functools
 import time
-from collections import Counter
+try:
+    from collections import Counter
+except:
+    from .compat import Counter
 from collections import namedtuple
 
 _cache = {}
