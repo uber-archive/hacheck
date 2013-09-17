@@ -21,7 +21,7 @@ When it does query the actual service check endpoint, **hacheck** MAY cache the 
 
 **hacheck** is written in Python and makes extensive use of the [tornado](http://www.tornadoweb.org/en/stable/) asynchronous web framework (specifically, it uses the coroutine stuff in Tornado 3). Unit tests use nose and mock.
 
-It runs on Python 2.7 and above, as well as Python 3.2 and above.
+It runs on Python 2.6 and above, as well as Python 3.2 and above.
 
 ### Use cases
 

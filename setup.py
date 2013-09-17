@@ -38,7 +38,7 @@ setup(
     keywords=["monitoring", "load-balancing", "networking"],
     description="HAProxy health-check proxying service",
     install_requires=install_requires,
-    dependency_links = dependency_links,
+    dependency_links=dependency_links,
     test_suite="nose.collector",
     entry_points={
         'console_scripts': [
