@@ -33,8 +33,12 @@ def check_spool(service_name, port, query, io_loop, callback):
 def check_http(service_name, port, query, io_loop):
     if not query.startswith("/"):
         query = "/" + query  # pragma: no cover
-    request = tornado.httpclient.HTTPRequest('http://127.0.0.1:%d%s' % (port, query), method='GET',
-            headers={'User-Agent': 'hastate %s' % (__version__)}, request_timeout=TIMEOUT)
+    request = tornado.httpclient.HTTPRequest(
+        'http://127.0.0.1:%d%s' % (port, query),
+        method='GET',
+        headers={'User-Agent': 'hastate %s' % (__version__)},
+        request_timeout=TIMEOUT
+    )
     http_client = tornado.httpclient.AsyncHTTPClient(io_loop=io_loop)
     try:
         response = yield http_client.fetch(request)
