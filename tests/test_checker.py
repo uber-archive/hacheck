@@ -9,6 +9,7 @@ import tornado.web
 import tornado.testing
 
 from hacheck import checker
+from hacheck import config
 from hacheck import spool
 
 se = mock.sentinel
@@ -17,6 +18,11 @@ se = mock.sentinel
 class ReturnTwoHundred(tornado.web.RequestHandler):
     def get(self):
         self.write(b'TEST OK')
+
+
+class ExpectServiceNameHeader(tornado.web.RequestHandler):
+    def get(self):
+        self.write(self.request.headers['SName'])
 
 
 class ReturnFiveOhOne(tornado.web.RequestHandler):
@@ -45,6 +51,7 @@ class TestHTTPChecker(tornado.testing.AsyncHTTPTestCase):
     def get_app(self):
         return tornado.web.Application([
             ('/', ReturnTwoHundred),
+            ('/sname', ExpectServiceNameHeader),
             ('/bip', ReturnFiveOhOne),
         ])
 
@@ -79,6 +86,15 @@ class TestHTTPChecker(tornado.testing.AsyncHTTPTestCase):
         future = checker.check_http("foo", self.get_http_port() + 1, "/", io_loop=self.io_loop)
         future.add_done_callback(success)
         self.wait()
+
+    def test_service_name_header(self):
+        def success(fut):
+            self.assertEqual(b'service_name', fut.result()[1])
+            self.stop()
+        with mock.patch.dict(config.config, {'service_name_header': 'SName'}):
+            future = checker.check_http('service_name', self.get_http_port(), "/sname", io_loop=self.io_loop)
+            future.add_done_callback(success)
+            self.wait()
 
 
 class TestTCPChecker(tornado.testing.AsyncTestCase):
