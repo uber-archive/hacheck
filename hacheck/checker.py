@@ -8,6 +8,7 @@ import tornado.gen
 import tornado.httpclient
 
 from . import cache
+from . import config
 from . import spool
 from . import __version__
 
@@ -33,10 +34,13 @@ def check_spool(service_name, port, query, io_loop, callback):
 def check_http(service_name, port, query, io_loop):
     if not query.startswith("/"):
         query = "/" + query  # pragma: no cover
+    headers = {'User-Agent': 'hastate %s' % (__version__)}
+    if config.config['service_name_header']:
+        headers[config.config['service_name_header']] = service_name
     request = tornado.httpclient.HTTPRequest(
         'http://127.0.0.1:%d%s' % (port, query),
         method='GET',
-        headers={'User-Agent': 'hastate %s' % (__version__)},
+        headers=headers,
         request_timeout=TIMEOUT
     )
     http_client = tornado.httpclient.AsyncHTTPClient(io_loop=io_loop)
