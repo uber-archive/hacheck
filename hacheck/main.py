@@ -8,6 +8,7 @@ import tornado.ioloop
 import tornado.web
 
 from . import cache
+from . import config
 from . import handlers
 from . import spool
 
@@ -23,15 +24,34 @@ def get_app():
 
 def main():
     parser = optparse.OptionParser()
-    parser.add_option('-p', '--port', default=3333, type=int)
-    parser.add_option('--cache-time', default=10.0, type=float,
-            help='How many seconds to cache response for (default %default)')
-    parser.add_option('--spool-root', default='/var/spool/hacheck',
-            help='Root for spool for service states (default %default)')
-    parser.add_option('-v', '--verbose', default=False, action='store_true')
+    parser.add_option(
+        '-c',
+        '--config-file',
+        default=None,
+        help='Path to a YAML config file'
+    )
+    parser.add_option(
+        '-p',
+        '--port',
+        default=3333,
+        type=int
+    )
+    parser.add_option(
+        '--spool-root',
+        default='/var/spool/hacheck',
+        help='Root for spool for service states (default %default)'
+    )
+    parser.add_option(
+        '-v',
+        '--verbose',
+        default=False,
+        action='store_true'
+    )
     opts, args = parser.parse_args()
+    if opts.config_file is not None:
+        config.load_from(opts.config_file)
     logging.basicConfig(level=(logging.DEBUG if opts.verbose else logging.WARNING))
-    cache.configure(cache_time=opts.cache_time)
+    cache.configure(cache_time=config.config['cache_time'])
     spool.configure(spool_root=opts.spool_root)
     application = get_app()
     application.listen(opts.port)
