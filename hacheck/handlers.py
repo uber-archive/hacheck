@@ -31,8 +31,9 @@ class BaseServiceHandler(tornado.web.RequestHandler):
         with cache.maybe_bust(self.request.headers.get('Pragma', '') == 'no-cache'):
             port = int(port)
             last_message = ""
+            querystr = self.request.query
             for checker in self.CHECKERS:
-                code, message = yield checker(service_name, port, query, io_loop=tornado.ioloop.IOLoop.current())
+                code, message = yield checker(service_name, port, query, io_loop=tornado.ioloop.IOLoop.current(), query_params=querystr)
                 last_message = message
                 if code > 200:
                     if code in tornado.httputil.responses:

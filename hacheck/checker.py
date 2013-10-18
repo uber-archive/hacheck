@@ -17,7 +17,7 @@ TIMEOUT = 10
 
 # Do not cache spool checks
 @tornado.concurrent.return_future
-def check_spool(service_name, port, query, io_loop, callback):
+def check_spool(service_name, port, query, io_loop, callback, query_params):
     up, extra_info = spool.is_up(service_name)
     if not up:
         info_string = 'Service %s in down state' % (extra_info['service'],)
@@ -31,14 +31,15 @@ def check_spool(service_name, port, query, io_loop, callback):
 # IMPORTANT: the gen.coroutine decorator needs to be the innermost
 @cache.cached
 @tornado.gen.coroutine
-def check_http(service_name, port, query, io_loop):
-    if not query.startswith("/"):
-        query = "/" + query  # pragma: no cover
+def check_http(service_name, port, check_path, io_loop, query_params):
+    if not check_path.startswith("/"):
+        check_path = "/" + check_path  # pragma: no cover
     headers = {'User-Agent': 'hastate %s' % (__version__)}
     if config.config['service_name_header']:
         headers[config.config['service_name_header']] = service_name
+    path = 'http://127.0.0.1:%d%s%s' % (port, check_path, '?' + query_params if query_params else '')
     request = tornado.httpclient.HTTPRequest(
-        'http://127.0.0.1:%d%s' % (port, query),
+        path,
         method='GET',
         headers=headers,
         request_timeout=TIMEOUT
@@ -56,7 +57,7 @@ def check_http(service_name, port, query, io_loop):
 
 @cache.cached
 @tornado.gen.coroutine
-def check_tcp(service_name, port, query, io_loop):
+def check_tcp(service_name, port, query, io_loop, query_params):
     stream = None
     connect_start = time.time()
 

@@ -24,6 +24,11 @@ class PingHandler(tornado.web.RequestHandler):
             self.write(b'FAIL')
 
 
+class ArgBarHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.write(self.get_argument('bar'))
+
+
 class TestIntegration(tornado.testing.AsyncHTTPTestCase):
     def setUp(self):
         self.cwd = tempfile.mkdtemp()
@@ -40,6 +45,7 @@ class TestIntegration(tornado.testing.AsyncHTTPTestCase):
         hacheck_app = hacheck.main.get_app()
         hacheck_app.add_handlers(r'.*', [
             (r'/pinged', PingHandler),
+            (r'/arg_bar', ArgBarHandler),
         ])
         return hacheck_app
 
@@ -85,3 +91,12 @@ class TestIntegration(tornado.testing.AsyncHTTPTestCase):
             response = self.fetch('/http/test_app/%d/pinged' % self.get_http_port())
             self.assertEqual(200, response.code)
             self.assertEqual(b'dinged', response.body)
+
+    def test_query_parameters_bad(self):
+        response = self.fetch('/http/test_app/%d/arg_bar' % self.get_http_port())
+        self.assertEqual(400, response.code)
+
+    def test_query_parameters_good(self):
+        response = self.fetch('/http/test_app/%d/arg_bar?bar=baz' % self.get_http_port())
+        self.assertEqual(200, response.code)
+        self.assertEqual(b'baz', response.body)

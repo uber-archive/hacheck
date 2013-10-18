@@ -72,8 +72,8 @@ class ApplicationTestCase(tornado.testing.AsyncHTTPTestCase):
             response = self.fetch('/spool/foo/1/status')
             self.assertEqual(200, response.code)
             self.assertEqual(b'OK2', response.body)
-            checker1.assert_called_once_with('foo', 1, 'status', io_loop=mock.ANY)
-            checker2.assert_called_once_with('foo', 1, 'status', io_loop=mock.ANY)
+            checker1.assert_called_once_with('foo', 1, 'status', io_loop=mock.ANY, query_params='')
+            checker2.assert_called_once_with('foo', 1, 'status', io_loop=mock.ANY, query_params='')
 
     def test_any_failure_fails_all_first(self):
         rv1 = tornado.concurrent.Future()
