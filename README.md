@@ -32,6 +32,7 @@ Imagine you want to take down the server `web01` for maintenance. Just SSH to it
 `hacheck` accepts a `-c` flag which should point to a YAML-formatted configuration file. Some notable properties of this file:
 * `cache_time`: The duration for which check results may be cached
 * `service_name_header`: If set, the name of a header which will be populated with the service name on HTTP checks
+* `log_path`: Either the string `"stdout"`, the string `"stderr"`, or a fully-qualified path to a file to write logs to. Uses a [http://docs.python.org/2/library/logging.handlers.html#watchedfilehandler](WatchedFileHandler) and ought to play nicely with logrotate
 
 ### License
 
