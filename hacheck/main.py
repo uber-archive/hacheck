@@ -53,7 +53,7 @@ def main():
 
     # set up logging
     log_path = config.config['log_path']
-    level = logging.DEBUG if opts.verbose else logging.WARNING,
+    level = logging.DEBUG if opts.verbose else logging.WARNING
     if log_path == 'stdout':
         handler = logging.StreamHandler(sys.stdout)
     elif log_path == 'stderr':
