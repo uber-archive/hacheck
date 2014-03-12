@@ -3,7 +3,8 @@ import yaml
 
 DEFAULTS = {
     'cache_time': (float, 10.0),
-    'service_name_header': (str, None)
+    'service_name_header': (str, None),
+    'log_path': (str, 'stderr'),
 }
 
 
