@@ -50,16 +50,22 @@ def main():
     opts, args = parser.parse_args()
     if opts.config_file is not None:
         config.load_from(opts.config_file)
-    log_kwargs = {
-        'level': logging.DEBUG if opts.verbose else logging.WARNING,
-    }
-    if config.config['log_path'] == 'stdout':
-        log_kwargs['stream'] = sys.stdout
-    elif config.config['log_path'] == 'stderr':
-        log_kwargs['stream'] = sys.stderr
+
+    # set up logging
+    log_path = config.config['log_path']
+    level = logging.DEBUG if opts.verbose else logging.WARNING
+    if log_path == 'stdout':
+        handler = logging.StreamHandler(sys.stdout)
+    elif log_path == 'stderr':
+        handler = logging.StreamHandler(sys.stderr)
     else:
-        log_kwargs['filename'] = config.config['log_path']
-    logging.basicConfig(**log_kwargs)
+        handler = logging.handlers.WatchedFileHandler(log_path)
+    fmt = logging.Formatter(logging.BASIC_FORMAT, None)
+    handler.setFormatter(fmt)
+    logging.getLogger().addHandler(handler)
+    logging.getLogger().setLevel(level)
+
+    # application stuff
     cache.configure(cache_time=config.config['cache_time'])
     spool.configure(spool_root=opts.spool_root)
     application = get_app()
