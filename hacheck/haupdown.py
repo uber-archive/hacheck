@@ -32,10 +32,19 @@ def print_s(fmt_string, *formats):
 def main(default_action='status'):
     ACTIONS = ('up', 'down', 'status', 'status_all')
     parser = optparse.OptionParser(usage='%prog [options] service_name')
-    parser.add_option('--spool-root', default='/var/spool/hacheck',
-        help='Root for spool for service states (default %default)')
-    parser.add_option('-a', '--action', type='choice', choices=ACTIONS, default=default_action,
-        help='Action (one of %s, default %%default)' % ', '.join(ACTIONS, ))
+    parser.add_option(
+        '--spool-root',
+        default='/var/spool/hacheck',
+        help='Root for spool for service states (default %default)'
+    )
+    parser.add_option(
+        '-a',
+        '--action',
+        type='choice',
+        choices=ACTIONS,
+        default=default_action,
+        help='Action (one of %s, default %%default)' % ', '.join(ACTIONS, )
+    )
     parser.add_option('-r', '--reason', type=str, default="", help='Reason string when setting down')
     opts, args = parser.parse_args()
 
