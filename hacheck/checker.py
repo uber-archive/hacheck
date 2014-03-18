@@ -33,7 +33,8 @@ def check_spool(service_name, port, query, io_loop, callback, query_params):
 # IMPORTANT: the gen.coroutine decorator needs to be the innermost
 @cache.cached
 @tornado.gen.coroutine
-def check_http(service_name, port, check_path, io_loop, qp):
+def check_http(service_name, port, check_path, io_loop, query_params):
+    qp = query_params
     if not check_path.startswith("/"):
         check_path = "/" + check_path  # pragma: no cover
     headers = {'User-Agent': 'hastate %s' % (__version__)}
