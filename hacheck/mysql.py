@@ -3,17 +3,26 @@
 import datetime
 import socket
 import struct
+import sys
 import time
 from hashlib import sha1
 
+from . import compat
+
+import tornado.gen
 import tornado.iostream
 
 
 def _sxor(lhs, rhs):
-    return ''.join(chr(ord(a) ^ ord(b)) for a, b in zip(lhs, rhs))
+    if sys.version_info > (3, 0):
+        return b''.join(compat.bchr(a ^ b) for a, b in zip(lhs, rhs))
+    else:
+        return b''.join(compat.bchr(ord(a) ^ ord(b)) for a, b in zip(lhs, rhs))
 
 
 def _stupid_hash_password(salt, password):
+    password = password.encode('utf-8')
+    salt = salt.encode('utf-8')
     return _sxor(
         sha1(password).digest(),
         sha1(
@@ -29,7 +38,7 @@ def _read_lenc(buf, offset=0):
     elif first == 0xfc:
         return struct.unpack('<H', buf[offset + 1:offset + 3])[0], offset + 3
     elif first == 0xfd:
-        return struct.unpack('<I', buf[offset + 1:offset + 4] + '\0')[0], offset + 4
+        return struct.unpack('<I', buf[offset + 1:offset + 4] + b'\0')[0], offset + 4
     elif first == 0xfe:
         return struct.unpack('<Q', buf[offset + 1:offset + 9])[0], offset + 9
 
