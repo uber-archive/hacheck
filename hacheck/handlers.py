@@ -59,3 +59,7 @@ class HTTPServiceHandler(BaseServiceHandler):
 
 class TCPServiceHandler(BaseServiceHandler):
     CHECKERS = [checker.check_spool, checker.check_tcp]
+
+
+class MySQLServiceHandler(BaseServiceHandler):
+    CHECKERS = [checker.check_spool, checker.check_mysql]

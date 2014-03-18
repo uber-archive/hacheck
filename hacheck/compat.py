@@ -54,7 +54,16 @@ def nested3(*managers):
             raise exc[1]
 
 
+def bchr3(c):
+    return bytes((c,))
+
+def bchr2(c):
+    return chr(c)
+
+
 if sys.version_info < (3, 0):
     nested = contextlib.nested
+    bchr = bchr2
 else:
     nested = nested3
+    bchr = bchr3

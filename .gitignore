@@ -4,3 +4,8 @@ dist/
 hacheck.egg-info/
 .coverage
 spool/
+env/
+env26/
+env27/
+env32/
+env33/
