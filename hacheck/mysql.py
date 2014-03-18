@@ -22,16 +22,16 @@ def _stupid_hash_password(salt, password):
     )
 
 
-def _read_lenc(buf, offset):
+def _read_lenc(buf, offset=0):
     first = struct.unpack('B', buf[offset:offset + 1])[0]
     if first < 0xfb:
         return first, offset + 1
     elif first == 0xfc:
-        return struct.unpack('<H', buf[offset:offset + 2])[0], offset + 2
+        return struct.unpack('<H', buf[offset + 1:offset + 3])[0], offset + 3
     elif first == 0xfd:
         return struct.unpack('<I', buf[offset + 1:offset + 4] + '\0')[0], offset + 4
     elif first == 0xfe:
-        return struct.unpack('<L', buf[offset + 1:offset + 9])[0], offset + 9
+        return struct.unpack('<Q', buf[offset + 1:offset + 9])[0], offset + 9
 
 
 class MySQLResponse(object):
