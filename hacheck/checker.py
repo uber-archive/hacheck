@@ -4,11 +4,13 @@ import time
 
 import tornado.concurrent
 import tornado.ioloop
+import tornado.iostream
 import tornado.gen
 import tornado.httpclient
 
 from . import cache
 from . import config
+from . import mysql
 from . import spool
 from . import __version__
 
@@ -31,13 +33,13 @@ def check_spool(service_name, port, query, io_loop, callback, query_params):
 # IMPORTANT: the gen.coroutine decorator needs to be the innermost
 @cache.cached
 @tornado.gen.coroutine
-def check_http(service_name, port, check_path, io_loop, query_params):
+def check_http(service_name, port, check_path, io_loop, qp):
     if not check_path.startswith("/"):
         check_path = "/" + check_path  # pragma: no cover
     headers = {'User-Agent': 'hastate %s' % (__version__)}
     if config.config['service_name_header']:
         headers[config.config['service_name_header']] = service_name
-    path = 'http://127.0.0.1:%d%s%s' % (port, check_path, '?' + query_params if query_params else '')
+    path = 'http://127.0.0.1:%d%s%s' % (port, check_path, '?' + qp if qp else '')
     request = tornado.httpclient.HTTPRequest(
         path,
         method='GET',
@@ -75,3 +77,22 @@ def check_tcp(service_name, port, query, io_loop, query_params):
     io_loop.remove_timeout(timeout)
     stream.close()
     raise tornado.gen.Return((200, 'Connected in %.2fs' % (time.time() - connect_start)))
+
+
+@cache.cached
+@tornado.gen.coroutine
+def check_mysql(service_name, port, query, io_loop, query_params):
+    username = config.config.get('mysql_username', None)
+    password = config.config.get('mysql_password', None)
+    if username is None or password is None:
+        raise tornado.gen.Return((500, 'No MySQL username/pasword in config file'))
+
+    def timed_out(duration):
+        raise tornado.gen.Return((503, 'MySQL timed out after %.2fs' % (duration)))
+
+    conn = mysql.MySQLClient(port=port, global_timeout=TIMEOUT, io_loop=io_loop)
+    response = yield conn.connect(username, password)
+    if not response.OK:
+        raise tornado.gen.Return((500, 'MySQL sez %s' % response))
+    yield conn.quit()
+    raise tornado.gen.Return((200, 'MySQL connect response: %s' % response))

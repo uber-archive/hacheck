@@ -5,6 +5,8 @@ DEFAULTS = {
     'cache_time': (float, 10.0),
     'service_name_header': (str, None),
     'log_path': (str, 'stderr'),
+    'mysql_username': (str, None),
+    'mysql_password': (str, None),
 }
 
 
