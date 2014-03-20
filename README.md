@@ -12,7 +12,7 @@ This will check the following locations for service state:
   * if `http`: `http://localhost:<port>/<query>`
   * if `tcp`: will attempt to connect to port `<port>` on localhost. `<query>` is currently ignored
   * if `spool`: will only check the spool state
-  * if `mysql` and the `mysql_username` and `mysql_password` are set, will do a login and quit on the requested mysql port
+  * if `mysql` and the `mysql_username` and `mysql_password` are set, will do a login and quit on the requested mysql port; `<query>` is ignored and no logical database is selected.
 
 When it does query the actual service check endpoint, **hacheck** MAY cache the value of that query for some amount of time
 
