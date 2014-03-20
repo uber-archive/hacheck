@@ -12,6 +12,7 @@ This will check the following locations for service state:
   * if `http`: `http://localhost:<port>/<query>`
   * if `tcp`: will attempt to connect to port `<port>` on localhost. `<query>` is currently ignored
   * if `spool`: will only check the spool state
+  * if `mysql` and the `mysql_username` and `mysql_password` are set, will do a login and quit on the requested mysql port
 
 When it does query the actual service check endpoint, **hacheck** MAY cache the value of that query for some amount of time
 
@@ -33,6 +34,8 @@ Imagine you want to take down the server `web01` for maintenance. Just SSH to it
 * `cache_time`: The duration for which check results may be cached
 * `service_name_header`: If set, the name of a header which will be populated with the service name on HTTP checks
 * `log_path`: Either the string `"stdout"`, the string `"stderr"`, or a fully-qualified path to a file to write logs to. Uses a [WatchedFileHandler](http://docs.python.org/2/library/logging.handlers.html#watchedfilehandler) and ought to play nicely with logrotate
+* `mysql_username`: username to use when logging into mysql for checks
+* `mysql_password`: password to use when logging into mysql for checks
 
 ### License
 
