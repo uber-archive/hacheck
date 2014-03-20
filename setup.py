@@ -4,8 +4,6 @@ import collections
 from setuptools import setup, find_packages
 from pip.req import parse_requirements
 
-import hacheck
-
 
 def get_install_requirements():
 
@@ -29,7 +27,7 @@ install_requires, dependency_links = get_install_requirements()
 
 setup(
     name="hacheck",
-    version=hacheck.__version__,
+    version="0.5.0",
     author="James Brown",
     author_email="jbrown@uber.com",
     url="https://github.com/uber/hacheck",
