@@ -4,6 +4,11 @@ import signal
 import time
 import sys
 
+try:
+    import mutornadomon
+except (ImportError, SyntaxError):
+    mutornadomon = None
+
 import tornado.ioloop
 import tornado.web
 
@@ -35,7 +40,8 @@ def main():
         '-p',
         '--port',
         default=3333,
-        type=int
+        type=int,
+        help='Port to listen on (default %default)'
     )
     parser.add_option(
         '--spool-root',
@@ -70,10 +76,21 @@ def main():
     cache.configure(cache_time=config.config['cache_time'])
     spool.configure(spool_root=opts.spool_root)
     application = get_app()
-    application.listen(opts.port)
+    application.listen(port=opts.port)
+
     ioloop = tornado.ioloop.IOLoop.instance()
+    if mutornadomon is not None:
+        monitor = mutornadomon.initialize_mutornadomon(application)
+    else:
+        monitor = None
+
+    def stop(*args):
+        if monitor is not None:
+            monitor.stop()
+        ioloop.stop()
+
     for sig in (signal.SIGTERM, signal.SIGQUIT, signal.SIGINT):
-        signal.signal(sig, lambda *args: ioloop.stop())
+        signal.signal(sig, stop)
     ioloop.start()
     return 0
 
