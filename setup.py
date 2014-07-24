@@ -42,6 +42,7 @@ setup(
         'console_scripts': [
             'haup = hacheck.haupdown:up',
             'hadown = hacheck.haupdown:down',
+            'hashowdowned = hacheck.haupdown:status_downed',
             'hastatus = hacheck.haupdown:status',
             'halist = hacheck.haupdown:halist',
             'hacheck = hacheck.main:main',

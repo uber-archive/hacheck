@@ -28,8 +28,8 @@ def status():
     return main('status')
 
 
-def status_all():
-    return main('status_all')
+def status_downed():
+    return main('status_downed')
 
 
 def print_s(fmt_string, *formats):
@@ -38,7 +38,7 @@ def print_s(fmt_string, *formats):
 
 
 def main(default_action='status'):
-    ACTIONS = ('up', 'down', 'status', 'status_all', 'list')
+    ACTIONS = ('up', 'down', 'status', 'status_downed', 'list')
     parser = optparse.OptionParser(usage='%prog [options] service_name')
     parser.add_option(
         '--spool-root',
@@ -91,7 +91,7 @@ def main(default_action='status'):
     elif opts.action == 'down':
         hacheck.spool.down(service_name, opts.reason)
         return 0
-    elif opts.action == 'status_all':
+    elif opts.action == 'status_downed':
         for service_name, info in hacheck.spool.status_all_down():
             print_s('DOWN\t%s\t%s', service_name, info.get('reason', ''))
         return 0
