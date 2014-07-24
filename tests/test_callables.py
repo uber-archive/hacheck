@@ -70,7 +70,7 @@ class TestCallable(TestCase):
 
     def test_list(self):
         with self.setup_wrapper() as (spooler, mock_print):
-            with mock.patch('urllib2.urlopen') as mock_urlopen:
+            with mock.patch.object(hacheck.haupdown, 'urlopen') as mock_urlopen:
                 mock_urlopen.return_value.read.return_value = json.dumps({
                     "seen_services": ["foo"],
                     "threshold_seconds": 10,

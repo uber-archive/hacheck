@@ -1,4 +1,6 @@
 import mock
+import socket
+
 try:
     from unittest2 import TestCase
 except ImportError:
@@ -13,6 +15,13 @@ from hacheck import config
 from hacheck import spool
 
 se = mock.sentinel
+
+
+def bind_synchronous_unused_port():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(('127.0.0.1', 0))
+    port = s.getsockname()[1]
+    return s, port
 
 
 class ReturnTwoHundred(tornado.web.RequestHandler):
@@ -106,20 +115,21 @@ class TestTCPChecker(tornado.testing.AsyncTestCase):
         self.server.add_socket(socket)
         self.socket = socket
         self.port = port
+        unlistened_socket, unlistened_port = bind_synchronous_unused_port()
+        self.unlistened_socket = unlistened_socket
+        self.unlistened_port = unlistened_port
 
     def tearDown(self):
         super(TestTCPChecker, self).tearDown()
         self.server.stop()
-        self.socket.close()
 
     @tornado.testing.gen_test
     def test_check_success(self):
         response = yield checker.check_tcp("foo", self.port, None, io_loop=self.io_loop, query_params="")
         self.assertEqual(200, response[0])
 
+    @tornado.testing.gen_test
     def test_check_failure(self):
         with mock.patch.object(checker, 'TIMEOUT', 1):
-            future = checker.check_tcp("foo", self.port + 1, None, io_loop=self.io_loop, query_params="")
-            future.add_done_callback(self.stop)
-            response = self.wait()
-            self.assertEqual(response.result()[0], 503)
+            response = yield checker.check_tcp("foo", self.unlistened_port, None, io_loop=self.io_loop, query_params="")
+            self.assertEqual(response[0], 503)

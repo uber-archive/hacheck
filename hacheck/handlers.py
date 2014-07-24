@@ -28,7 +28,7 @@ class ListRecentHandler(tornado.web.RequestHandler):
     def get(self):
         now = time.time()
         recency_threshold = int(self.get_argument('threshold', 10 * 60))
-        s = set(s for s, t in seen_services.iteritems() if now - t < recency_threshold)
+        s = set(s for s, t in seen_services.items() if now - t < recency_threshold)
         self.write({
             'seen_services': list(sorted(s)),
             'threshold_seconds': recency_threshold

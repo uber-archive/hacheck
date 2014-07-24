@@ -6,7 +6,8 @@ import contextlib
 import json
 import optparse
 import sys
-import urllib2
+
+from six.moves.urllib.request import urlopen
 
 import hacheck.spool
 
@@ -76,7 +77,7 @@ def main(default_action='status'):
     hacheck.spool.configure(opts.spool_root, needs_write=True)
 
     if opts.action == 'list':
-        with contextlib.closing(urllib2.urlopen(
+        with contextlib.closing(urlopen(
             'http://127.0.0.1:%d/recent' % opts.port,
             timeout=3
         )) as f:
