@@ -62,10 +62,10 @@ class TestCallable(TestCase):
             spooler.status.assert_called_once_with(sentinel_service_name)
             mock_print.assert_called_once_with("UP\t%s", sentinel_service_name)
 
-    def test_status_all(self):
+    def test_status_downed(self):
         with self.setup_wrapper() as (spooler, mock_print):
             spooler.status_all_down.return_value = [(sentinel_service_name, {'service': sentinel_service_name, 'reason': ''})]
-            self.assertEqual(hacheck.haupdown.status_all(), 0)
+            self.assertEqual(hacheck.haupdown.status_downed(), 0)
             mock_print.assert_called_once_with("DOWN\t%s\t%s", sentinel_service_name, mock.ANY)
 
     def test_list(self):

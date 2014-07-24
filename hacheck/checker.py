@@ -29,23 +29,21 @@ def add_timeout_to_task(func, args=tuple(), kwargs=dict(), timeout_secs=TIMEOUT,
     # a Task object, which doesn't have an add_done_callback method of
     # any sort. So we're gonna hack the hell out of it by creating our own
     # Future object and populating it.
-    old_future = tornado.concurrent.Future()
-    new_future = tornado.concurrent.Future()
+    future = tornado.concurrent.Future()
 
     def callback(*args, **kwargs):
         if args:
             result = args[0]
         else:
             result = None
-        old_future.set_result(result)
+        future.set_result(result)
 
     kwargs['callback'] = callback
     func(*args, **kwargs)
 
     def timed_out(*args, **kwargs):
-        new_future.set_exception(Timeout('Timed out after %ds' % timeout_secs))
+        future.set_exception(Timeout('Timed out after %ds' % timeout_secs))
 
-    tornado.concurrent.chain_future(old_future, new_future)
     if io_loop is None:
         io_loop = tornado.ioloop.IOLoop.current()
     timeout = io_loop.add_timeout(
@@ -53,9 +51,9 @@ def add_timeout_to_task(func, args=tuple(), kwargs=dict(), timeout_secs=TIMEOUT,
         timed_out
     )
     io_loop.add_future(
-        old_future, lambda f: io_loop.remove_timeout(timeout)
+        future, lambda f: io_loop.remove_timeout(timeout)
     )
-    return new_future
+    return future
 
 
 # Do not cache spool checks
