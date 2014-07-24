@@ -2,6 +2,7 @@ import contextlib
 from hacheck.compat import nested
 
 import mock
+import json
 from unittest import TestCase
 
 import hacheck.haupdown
@@ -66,3 +67,14 @@ class TestCallable(TestCase):
             spooler.status_all_down.return_value = [(sentinel_service_name, {'service': sentinel_service_name, 'reason': ''})]
             self.assertEqual(hacheck.haupdown.status_all(), 0)
             mock_print.assert_called_once_with("DOWN\t%s\t%s", sentinel_service_name, mock.ANY)
+
+    def test_list(self):
+        with self.setup_wrapper() as (spooler, mock_print):
+            with mock.patch('urllib2.urlopen') as mock_urlopen:
+                mock_urlopen.return_value.read.return_value = json.dumps({
+                    "seen_services": ["foo"],
+                    "threshold_seconds": 10,
+                })
+                self.assertEqual(hacheck.haupdown.halist(), 0)
+                mock_urlopen.assert_called_once_with('http://127.0.0.1:3333/recent', timeout=mock.ANY)
+                mock_print.assert_called_once_with("foo")

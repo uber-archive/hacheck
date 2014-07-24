@@ -1,5 +1,6 @@
 import json
 import tempfile
+import shutil
 
 from hacheck.compat import nested
 
@@ -19,16 +20,21 @@ class ApplicationTestCase(tornado.testing.AsyncHTTPTestCase):
         # flush the cache before every test
         cache.configure()
         self.config_file = tempfile.NamedTemporaryFile(delete=True)
+        self.spool = tempfile.mkdtemp()
         mock_config = {
-            'cache_time': 100.0
+            'cache_time': 100.0,
+            'spool_root': self.spool
         }
         self.config_file.write(yaml.dump(mock_config).encode('utf-8'))
         self.config_file.flush()
+        spool.configure(spool_root=self.spool)
         super(ApplicationTestCase, self).setUp()
 
     def tearDown(self):
         if self.config_file:
             self.config_file.close()
+        if self.spool:
+            shutil.rmtree(self.spool)
 
     def get_app(self):
         return main.get_app()
@@ -119,3 +125,14 @@ class ApplicationTestCase(tornado.testing.AsyncHTTPTestCase):
             main.main()
             spool_configure.assert_called_once_with(spool_root='foo')
             cache_configure.assert_called_once_with(cache_time=100)
+
+    def test_show_recent(self):
+        handlers.seen_services.clear()
+        response = self.fetch('/spool/foo/1/status')
+        self.assertEqual(200, response.code)
+        response = self.fetch('/recent')
+        b = json.load(response.buffer)
+        self.assertEqual(b, {'seen_services': ['foo'], 'threshold_seconds': 600})
+        response = self.fetch('/recent?threshold=20')
+        b = json.load(response.buffer)
+        self.assertEqual(b, {'seen_services': ['foo'], 'threshold_seconds': 20})

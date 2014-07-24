@@ -43,6 +43,7 @@ setup(
             'haup = hacheck.haupdown:up',
             'hadown = hacheck.haupdown:down',
             'hastatus = hacheck.haupdown:status',
+            'halist = hacheck.haupdown:halist',
             'hacheck = hacheck.main:main',
         ]
     },

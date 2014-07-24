@@ -12,6 +12,8 @@ from . import checker
 
 log = logging.getLogger('hacheck')
 
+seen_services = {}
+
 
 class StatusHandler(tornado.web.RequestHandler):
     def get(self):
@@ -22,18 +24,36 @@ class StatusHandler(tornado.web.RequestHandler):
         self.write(stats)
 
 
+class ListRecentHandler(tornado.web.RequestHandler):
+    def get(self):
+        now = time.time()
+        recency_threshold = int(self.get_argument('threshold', 10 * 60))
+        s = set(s for s, t in seen_services.iteritems() if now - t < recency_threshold)
+        self.write({
+            'seen_services': list(sorted(s)),
+            'threshold_seconds': recency_threshold
+        })
+
+
 class BaseServiceHandler(tornado.web.RequestHandler):
     CHECKERS = []
 
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def get(self, service_name, port, query):
+        seen_services[service_name] = time.time()
         with cache.maybe_bust(self.request.headers.get('Pragma', '') == 'no-cache'):
             port = int(port)
             last_message = ""
             querystr = self.request.query
             for checker in self.CHECKERS:
-                code, message = yield checker(service_name, port, query, io_loop=tornado.ioloop.IOLoop.current(), query_params=querystr)
+                code, message = yield checker(
+                    service_name,
+                    port,
+                    query,
+                    io_loop=tornado.ioloop.IOLoop.current(),
+                    query_params=querystr
+                )
                 last_message = message
                 if code > 200:
                     if code in tornado.httputil.responses:

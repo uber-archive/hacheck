@@ -2,8 +2,11 @@
 
 from __future__ import print_function
 
+import contextlib
+import json
 import optparse
 import sys
+import urllib2
 
 import hacheck.spool
 
@@ -14,6 +17,10 @@ def up():
 
 def down():
     return main('down')
+
+
+def halist():
+    return main('list')
 
 
 def status():
@@ -30,7 +37,7 @@ def print_s(fmt_string, *formats):
 
 
 def main(default_action='status'):
-    ACTIONS = ('up', 'down', 'status', 'status_all')
+    ACTIONS = ('up', 'down', 'status', 'status_all', 'list')
     parser = optparse.OptionParser(usage='%prog [options] service_name')
     parser.add_option(
         '--spool-root',
@@ -45,17 +52,39 @@ def main(default_action='status'):
         default=default_action,
         help='Action (one of %s, default %%default)' % ', '.join(ACTIONS, )
     )
-    parser.add_option('-r', '--reason', type=str, default="", help='Reason string when setting down')
+    parser.add_option(
+        '-r',
+        '--reason',
+        type=str,
+        default="",
+        help='Reason string when setting down'
+    )
+    parser.add_option(
+        '-p',
+        '--port',
+        type=str,
+        default=3333,
+        help='Port that the hacheck daemon is running on (default %(default)'
+    )
     opts, args = parser.parse_args()
 
-    if opts.action != 'status_all':
+    if opts.action in ('status', 'up', 'down'):
         if len(args) != 1:
             parser.error('Wrong number of arguments')
         service_name = args[0]
 
     hacheck.spool.configure(opts.spool_root, needs_write=True)
 
-    if opts.action == 'up':
+    if opts.action == 'list':
+        with contextlib.closing(urllib2.urlopen(
+            'http://127.0.0.1:%d/recent' % opts.port,
+            timeout=3
+        )) as f:
+            resp = json.load(f)
+            for s in sorted(resp['seen_services']):
+                print_s(s)
+            return 0
+    elif opts.action == 'up':
         hacheck.spool.up(service_name)
         return 0
     elif opts.action == 'down':
