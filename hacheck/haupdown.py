@@ -74,8 +74,6 @@ def main(default_action='status'):
             parser.error('Wrong number of arguments')
         service_name = args[0]
 
-    hacheck.spool.configure(opts.spool_root, needs_write=True)
-
     if opts.action == 'list':
         with contextlib.closing(urlopen(
             'http://127.0.0.1:%d/recent' % opts.port,
@@ -86,16 +84,20 @@ def main(default_action='status'):
                 print_s(s)
             return 0
     elif opts.action == 'up':
+        hacheck.spool.configure(opts.spool_root, needs_write=True)
         hacheck.spool.up(service_name)
         return 0
     elif opts.action == 'down':
+        hacheck.spool.configure(opts.spool_root, needs_write=True)
         hacheck.spool.down(service_name, opts.reason)
         return 0
     elif opts.action == 'status_downed':
+        hacheck.spool.configure(opts.spool_root, needs_write=False)
         for service_name, info in hacheck.spool.status_all_down():
             print_s('DOWN\t%s\t%s', service_name, info.get('reason', ''))
         return 0
     else:
+        hacheck.spool.configure(opts.spool_root, needs_write=False)
         status, info = hacheck.spool.status(service_name)
         if status:
             print_s('UP\t%s', service_name)
