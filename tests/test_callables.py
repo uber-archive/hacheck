@@ -26,7 +26,7 @@ class TestCallable(TestCase):
         with self.setup_wrapper() as (spooler, _):
             spooler.status.return_value = (True, {})
             hacheck.haupdown.main()
-            spooler.configure.assert_called_once_with('/var/spool/hacheck', needs_write=True)
+            spooler.configure.assert_called_once_with('/var/spool/hacheck', needs_write=False)
 
     def test_exit_codes(self):
         with self.setup_wrapper() as (spooler, mock_print):

@@ -107,11 +107,18 @@ class TestHTTPChecker(tornado.testing.AsyncHTTPTestCase):
         self.assertEqual(400, response[0])
 
 
+class TestServer(tornado.tcpserver.TCPServer):
+    @tornado.gen.coroutine
+    def handle_stream(stream):
+        yield stream.write('hello')
+        stream.close()
+
+
 class TestTCPChecker(tornado.testing.AsyncTestCase):
     def setUp(self):
         super(TestTCPChecker, self).setUp()
         socket, port = tornado.testing.bind_unused_port()
-        self.server = tornado.tcpserver.TCPServer(io_loop=self.io_loop)
+        self.server = TestServer(io_loop=self.io_loop)
         self.server.add_socket(socket)
         self.socket = socket
         self.port = port
@@ -121,7 +128,11 @@ class TestTCPChecker(tornado.testing.AsyncTestCase):
 
     def tearDown(self):
         super(TestTCPChecker, self).tearDown()
-        self.server.stop()
+        try:
+            self.server.stop()
+            self.socket.close()
+        except Exception:
+            pass
 
     @tornado.testing.gen_test
     def test_check_success(self):
