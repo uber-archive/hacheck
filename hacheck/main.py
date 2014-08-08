@@ -35,8 +35,10 @@ def main():
     parser.add_option(
         '-p',
         '--port',
-        default=3333,
-        type=int
+        default=[3333],
+        action='append',
+        type=int,
+        help='Port to bind to (may be repeated)',
     )
     parser.add_option(
         '--spool-root',
@@ -71,7 +73,8 @@ def main():
     cache.configure(cache_time=config.config['cache_time'])
     spool.configure(spool_root=opts.spool_root)
     application = get_app()
-    application.listen(opts.port)
+    for p in sorted(set(opts.port)):
+        application.listen(p)
     ioloop = tornado.ioloop.IOLoop.instance()
     for sig in (signal.SIGTERM, signal.SIGQUIT, signal.SIGINT):
         signal.signal(sig, lambda *args: ioloop.stop())
