@@ -118,6 +118,7 @@ class MySQLClient(object):
     def _connect_socket(self):
         self.start = time.time()
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.stream = tornado.iostream.IOStream(s, io_loop=self.io_loop)
         if self.global_timeout:
             self.timeout = self.io_loop.add_timeout(datetime.timedelta(seconds=self.global_timeout), self._timed_out)

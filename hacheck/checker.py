@@ -107,6 +107,7 @@ def check_tcp(service_name, port, query, io_loop, query_params):
     connect_start = time.time()
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     try:
         stream = tornado.iostream.IOStream(s, io_loop=io_loop)
         yield add_timeout_to_task(
