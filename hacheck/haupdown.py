@@ -86,7 +86,7 @@ def main(default_action='status'):
         elif 'SSH_USER' in os.environ:
             opts.reason = os.environ['SSH_USER']
         else:
-            opts.reason = pwd.getpwuid(os.geteuid()).pw_nam
+            opts.reason = pwd.getpwuid(os.geteuid()).pw_name
         if opts.reason in nonhumans:
             print_s('please use --reason option to tell us who you REALLY are')
             return 1
