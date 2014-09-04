@@ -88,7 +88,7 @@ def main(default_action='status'):
         else:
             opts.reason = pwd.getpwuid(os.geteuid()).pw_nam
         if opts.reason in nonhumans:
-            print "please use --reason option to tell us who you REALLY are"
+            print_s('please use --reason option to tell us who you REALLY are')
             return 1
 
     if opts.action in ('status', 'up', 'down'):
