@@ -3,6 +3,7 @@ from hacheck.compat import nested
 
 import mock
 import json
+import os
 from unittest import TestCase
 
 import hacheck.haupdown
@@ -44,9 +45,12 @@ class TestCallable(TestCase):
             self.assertEqual(mock_print.call_count, 0)
 
     def test_down(self):
+        os.environ['SSH_USER'] = 'testyuser'
+        os.environ['SUDO_USER'] = 'testyuser'
         with self.setup_wrapper() as (spooler, mock_print):
             hacheck.haupdown.down()
-            spooler.down.assert_called_once_with(sentinel_service_name, '')
+            spooler.down.assert_called_once_with(sentinel_service_name,
+                                                 'testyuser')
             self.assertEqual(mock_print.call_count, 0)
 
     def test_down_with_reason(self):
