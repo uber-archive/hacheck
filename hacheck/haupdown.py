@@ -5,6 +5,8 @@ from __future__ import print_function
 import contextlib
 import json
 import optparse
+import os
+import pwd
 import sys
 
 from six.moves.urllib.request import urlopen
@@ -68,6 +70,26 @@ def main(default_action='status'):
         help='Port that the hacheck daemon is running on (default %(default)'
     )
     opts, args = parser.parse_args()
+
+    nonhumans = set()
+    try:
+        with open('/etc/nonhumans', 'r') as f:
+            for line in f:
+                unix_username = line.split('#')[0].strip()
+                if unix_username:
+                    nonhumans.add(unix_username)
+    except:
+        pass
+    if opts.action == 'down' and not opts.reason:
+        if 'SUDO_USER' in os.environ:
+            opts.reason = os.environ['SUDO_USER']
+        elif 'SSH_USER' in os.environ:
+            opts.reason = os.environ['SSH_USER']
+        else:
+            opts.reason = pwd.getpwuid(os.geteuid()).pw_nam
+        if opts.reason in nonhumans:
+            print "please use --reason option to tell us who you REALLY are"
+            return 1
 
     if opts.action in ('status', 'up', 'down'):
         if len(args) != 1:
