@@ -172,13 +172,13 @@ class TestRedisChecker(tornado.testing.AsyncTestCase):
 
     @tornado.testing.gen_test
     def test_check_success(self):
-        with mock.patch.object(self.server, 'response', '+PONG\r\n'):
+        with mock.patch.object(self.server, 'response', b'+PONG\r\n'):
             response = yield checker.check_redis("foo", self.port, None, io_loop=self.io_loop, query_params="")
             self.assertEqual(200, response[0], response[1])
 
     @tornado.testing.gen_test
     def test_check_error(self):
-        with mock.patch.object(self.server, 'response', 'WAT\r\n'):
+        with mock.patch.object(self.server, 'response', b'WAT\r\n'):
             response = yield checker.check_redis("foo", self.port, None, io_loop=self.io_loop, query_params="")
             self.assertEqual(500, response[0])
 

@@ -161,14 +161,14 @@ def check_redis(service_name, port, query, io_loop, query_params):
             args=[('127.0.0.1', port)],
             timeout_secs=TIMEOUT
         )
-        yield stream.write('PING\r\n')
+        yield stream.write(b'PING\r\n')
         response = yield add_timeout_to_task(
             stream.read_until,
-            args=['\n'],
-            timeout_secs=TIMEOUT
+            args=[b'\n'],
+            timeout_secs=1
         )
         stream.close()
-        if response.strip() != '+PONG':
+        if response.strip() != b'+PONG':
             raise tornado.gen.Return((500, 'Sent PING, got back %s' % response))
         else:
             raise tornado.gen.Return((200, 'Sent PING, got back +PONG'))
