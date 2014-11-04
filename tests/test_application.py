@@ -78,8 +78,24 @@ class ApplicationTestCase(tornado.testing.AsyncHTTPTestCase):
             response = self.fetch('/spool/foo/1/status')
             self.assertEqual(200, response.code)
             self.assertEqual(b'OK2', response.body)
-            checker1.assert_called_once_with('foo', 1, 'status', io_loop=mock.ANY, query_params='')
-            checker2.assert_called_once_with('foo', 1, 'status', io_loop=mock.ANY, query_params='')
+            checker1.assert_called_once_with('foo', 1, 'status', io_loop=mock.ANY, query_params='', headers=mock.ANY)
+            checker2.assert_called_once_with('foo', 1, 'status', io_loop=mock.ANY, query_params='', headers=mock.ANY)
+
+    def test_passes_headers(self):
+        rv1 = tornado.concurrent.Future()
+        rv1.set_result((200, b'OK1'))
+        checker1 = mock.Mock(return_value=rv1)
+        with mock.patch.object(handlers.SpoolServiceHandler, 'CHECKERS', [checker1]):
+            response = self.fetch('/spool/foo/1/status')
+            self.assertEqual(200, response.code)
+            checker1.assert_called_with(
+                'foo', 1, 'status', io_loop=mock.ANY, query_params='',
+                headers={
+                    'Connection': 'close',
+                    'Host': mock.ANY,
+                    'Accept-Encoding': 'gzip'
+                },
+            )
 
     def test_any_failure_fails_all_first(self):
         rv1 = tornado.concurrent.Future()
