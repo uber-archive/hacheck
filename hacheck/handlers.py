@@ -46,8 +46,8 @@ class BaseServiceHandler(tornado.web.RequestHandler):
             port = int(port)
             last_message = ""
             querystr = self.request.query
-            for checker in self.CHECKERS:
-                code, message = yield checker(
+            for this_checker in self.CHECKERS:
+                code, message = yield this_checker(
                     service_name,
                     port,
                     query,
