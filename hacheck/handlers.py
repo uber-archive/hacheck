@@ -52,7 +52,8 @@ class BaseServiceHandler(tornado.web.RequestHandler):
                     port,
                     query,
                     io_loop=tornado.ioloop.IOLoop.current(),
-                    query_params=querystr
+                    query_params=querystr,
+                    headers=self.request.headers,
                 )
                 last_message = message
                 if code > 200:

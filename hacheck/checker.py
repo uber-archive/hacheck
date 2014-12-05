@@ -16,6 +16,8 @@ from . import __version__
 
 TIMEOUT = 10
 
+HTTP_HEADERS_TO_COPY = ('Host',)
+
 
 class Timeout(Exception):
     pass
@@ -58,7 +60,7 @@ def add_timeout_to_task(func, args=tuple(), kwargs=dict(), timeout_secs=TIMEOUT,
 
 # Do not cache spool checks
 @tornado.concurrent.return_future
-def check_spool(service_name, port, query, io_loop, callback, query_params):
+def check_spool(service_name, port, query, io_loop, callback, query_params, headers):
     up, extra_info = spool.is_up(service_name)
     if not up:
         info_string = 'Service %s in down state' % (extra_info['service'],)
@@ -72,18 +74,21 @@ def check_spool(service_name, port, query, io_loop, callback, query_params):
 # IMPORTANT: the gen.coroutine decorator needs to be the innermost
 @cache.cached
 @tornado.gen.coroutine
-def check_http(service_name, port, check_path, io_loop, query_params):
+def check_http(service_name, port, check_path, io_loop, query_params, headers):
     qp = query_params
     if not check_path.startswith("/"):
         check_path = "/" + check_path  # pragma: no cover
-    headers = {'User-Agent': 'hastate %s' % (__version__)}
+    headers_out = {'User-Agent': 'hastate %s' % (__version__)}
+    for header in HTTP_HEADERS_TO_COPY:
+        if header in headers:
+            headers_out[header] = headers[header]
     if config.config['service_name_header']:
-        headers[config.config['service_name_header']] = service_name
+        headers_out[config.config['service_name_header']] = service_name
     path = 'http://127.0.0.1:%d%s%s' % (port, check_path, '?' + qp if qp else '')
     request = tornado.httpclient.HTTPRequest(
         path,
         method='GET',
-        headers=headers,
+        headers=headers_out,
         request_timeout=TIMEOUT
     )
     http_client = tornado.httpclient.AsyncHTTPClient(io_loop=io_loop)
@@ -102,7 +107,7 @@ def check_http(service_name, port, check_path, io_loop, query_params):
 
 @cache.cached
 @tornado.gen.coroutine
-def check_tcp(service_name, port, query, io_loop, query_params):
+def check_tcp(service_name, port, query, io_loop, query_params, headers):
     stream = None
     connect_start = time.time()
 
@@ -130,7 +135,7 @@ def check_tcp(service_name, port, query, io_loop, query_params):
 
 @cache.cached
 @tornado.gen.coroutine
-def check_mysql(service_name, port, query, io_loop, query_params):
+def check_mysql(service_name, port, query, io_loop, query_params, headers):
     username = config.config.get('mysql_username', None)
     password = config.config.get('mysql_password', None)
     if username is None or password is None:
