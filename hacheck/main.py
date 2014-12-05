@@ -5,6 +5,7 @@ import time
 import sys
 
 import tornado.ioloop
+import tornado.httpserver
 import tornado.web
 
 from . import cache
@@ -35,8 +36,16 @@ def main():
     parser.add_option(
         '-p',
         '--port',
-        default=3333,
-        type=int
+        default=[],
+        type=int,
+        action='append',
+        help='Port to listen on. May be repeated. If not passed, defaults to :3333.'
+    )
+    parser.add_option(
+        '-B',
+        '--bind-address',
+        default='0.0.0.0',
+        help='Address to listen on. Defaults to %default'
     )
     parser.add_option(
         '--spool-root',
@@ -52,6 +61,9 @@ def main():
     opts, args = parser.parse_args()
     if opts.config_file is not None:
         config.load_from(opts.config_file)
+
+    if not opts.port:
+        opts.port = [3333]
 
     # set up logging
     log_path = config.config['log_path']
@@ -71,8 +83,10 @@ def main():
     cache.configure(cache_time=config.config['cache_time'])
     spool.configure(spool_root=opts.spool_root)
     application = get_app()
-    application.listen(opts.port)
     ioloop = tornado.ioloop.IOLoop.instance()
+    server = tornado.httpserver.HTTPServer(application, io_loop=ioloop)
+    for port in opts.port:
+        server.listen(port, opts.bind_address)
     for sig in (signal.SIGTERM, signal.SIGQUIT, signal.SIGINT):
         signal.signal(sig, lambda *args: ioloop.stop())
     ioloop.start()
