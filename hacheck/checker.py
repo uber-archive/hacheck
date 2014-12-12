@@ -23,14 +23,12 @@ class Timeout(Exception):
     pass
 
 
-def add_timeout_to_task(func, args=tuple(), kwargs=dict(), timeout_secs=TIMEOUT, io_loop=None):
+def add_timeout_to_connect(stream, args=tuple(), kwargs=dict(), timeout_secs=TIMEOUT, io_loop=None):
     # In tornado 4.0, this is really easy
-    # (tornado.gen.with_timeout(gen.Task(func, args))
+    # (tornado.gen.with_timeout(gen.Task(func, args)) (where func is the connect method on a stream).
     #
-    # asas, in tornado 3.x, we don't get a Future from gen.Task, we get
-    # a Task object, which doesn't have an add_done_callback method of
-    # any sort. So we're gonna hack the hell out of it by creating our own
-    # Future object and populating it.
+    # But we want to support 3.x and we don't get anything useful there, so
+    # we're hacking it ourselves.
     future = tornado.concurrent.Future()
 
     def callback(*args, **kwargs):
@@ -40,8 +38,15 @@ def add_timeout_to_task(func, args=tuple(), kwargs=dict(), timeout_secs=TIMEOUT,
             result = None
         future.set_result(result)
 
+    def close_callback():
+        if stream.error:
+            future.set_exception(stream.error)
+
     kwargs['callback'] = callback
-    func(*args, **kwargs)
+    stream.set_close_callback(close_callback)
+    stream.connect(*args, **kwargs)
+    if stream.closed() and stream.error:
+        raise stream.error
 
     def timed_out(*args, **kwargs):
         future.set_exception(Timeout('Timed out after %ds' % timeout_secs))
@@ -114,8 +119,8 @@ def check_tcp(service_name, port, query, io_loop, query_params, headers):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
     try:
         stream = tornado.iostream.IOStream(s, io_loop=io_loop)
-        yield add_timeout_to_task(
-            stream.connect,
+        yield add_timeout_to_connect(
+            stream,
             args=[('127.0.0.1', port)],
             timeout_secs=TIMEOUT
         )
@@ -123,6 +128,11 @@ def check_tcp(service_name, port, query, io_loop, query_params, headers):
         raise tornado.gen.Return((
             503,
             'Connection timed out after %.2fs' % (time.time() - connect_start)
+        ))
+    except socket.error as e:
+        raise tornado.gen.Return((
+            503,
+            'Unexpected error %s after %2fs' % (e, time.time() - connect_start)
         ))
     finally:
         if stream:
