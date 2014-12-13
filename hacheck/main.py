@@ -7,11 +7,19 @@ import sys
 import tornado.ioloop
 import tornado.httpserver
 import tornado.web
+from tornado.log import access_log
 
 from . import cache
 from . import config
 from . import handlers
 from . import spool
+
+
+def log_request(handler):
+    # log requests at INFO instead of WARNING for all status codes
+    request_time = 1000.0 * handler.request.request_time()
+    access_log.debug("%d %s %.2fms", handler.get_status(),
+                     handler._request_summary(), request_time)
 
 
 def get_app():
@@ -22,7 +30,7 @@ def get_app():
         (r'/spool/([a-zA-Z0-9_-]+)/([0-9]+)/?(.*)', handlers.SpoolServiceHandler),
         (r'/recent', handlers.ListRecentHandler),
         (r'/status', handlers.StatusHandler),
-    ], start_time=time.time())
+    ], start_time=time.time(), log_function=log_request)
 
 
 def main():
