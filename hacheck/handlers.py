@@ -47,21 +47,28 @@ class BaseServiceHandler(tornado.web.RequestHandler):
             last_message = ""
             querystr = self.request.query
             for this_checker in self.CHECKERS:
-                code, message = yield this_checker(
-                    service_name,
-                    port,
-                    query,
-                    io_loop=tornado.ioloop.IOLoop.current(),
-                    query_params=querystr,
-                    headers=self.request.headers,
-                )
-                last_message = message
-                if code > 200:
-                    if code in tornado.httputil.responses:
-                        self.set_status(code)
-                    else:
-                        self.set_status(503)
-                    self.write(message)
+                try:
+                    code, message = yield this_checker(
+                        service_name,
+                        port,
+                        query,
+                        io_loop=tornado.ioloop.IOLoop.current(),
+                        query_params=querystr,
+                        headers=self.request.headers,
+                    )
+                    last_message = message
+                    if code > 200:
+                        if code in tornado.httputil.responses:
+                            self.set_status(code)
+                        else:
+                            self.set_status(503)
+                        self.write(message)
+                        self.finish()
+                        break
+                except Exception as e:
+                    log.exception('Error running checker %s' % this_checker)
+                    self.set_status(500)
+                    self.write(str(e))
                     self.finish()
                     break
             else:
@@ -84,3 +91,7 @@ class TCPServiceHandler(BaseServiceHandler):
 
 class MySQLServiceHandler(BaseServiceHandler):
     CHECKERS = [checker.check_spool, checker.check_mysql]
+
+
+class PostgreSQLServiceHandler(BaseServiceHandler):
+    CHECKERS = [checker.check_spool, checker.check_postgresql]

@@ -27,6 +27,7 @@ def get_app():
         (r'/http/([a-zA-Z0-9_-]+)/([0-9]+)/(.*)', handlers.HTTPServiceHandler),
         (r'/tcp/([a-zA-Z0-9_-]+)/([0-9]+)/?(.*)', handlers.TCPServiceHandler),
         (r'/mysql/([a-zA-Z0-9_-]+)/([0-9]+)/?(.*)', handlers.MySQLServiceHandler),
+        (r'/postgresql/([a-zA-Z0-9_-]+)/([0-9]+)/?(.*)', handlers.PostgreSQLServiceHandler),
         (r'/spool/([a-zA-Z0-9_-]+)/([0-9]+)/?(.*)', handlers.SpoolServiceHandler),
         (r'/recent', handlers.ListRecentHandler),
         (r'/status', handlers.StatusHandler),

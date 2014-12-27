@@ -2,3 +2,4 @@ tornado>=3.0.1,<4.1
 futures
 PyYAML>=3.0
 six>=1.4.0
+Momoko>=1.1.5
