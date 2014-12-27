@@ -160,3 +160,42 @@ def check_mysql(service_name, port, query, io_loop, query_params, headers):
         raise tornado.gen.Return((500, 'MySQL sez %s' % response))
     yield conn.quit()
     raise tornado.gen.Return((200, 'MySQL connect response: %s' % response))
+
+
+@cache.cached
+@tornado.gen.coroutine
+def check_postgresql(service_name, port, query, io_loop, query_params, headers):
+    dbname = query or 'uber'
+
+    username = config.config.get('postgresql_username', None)
+    password = config.config.get('postgresql_password', None)
+    if username is None or password is None:
+        raise tornado.gen.Return((500, 'No PostgreSQL username/password in config file'))
+
+    try:
+        import momoko.connection
+    except ImportError:
+        raise tornado.gen.Return((500, 'momoko module not available'))
+
+    dsn = "host=127.0.0.1 port=%d user=%s password=%s connect_timeout=%d dbname=%s" % (
+        port, username, password, 2, dbname
+    )
+
+    c = momoko.connection.Connection()
+    (conn, error), _ = yield tornado.gen.Task(c.connect, dsn)
+
+    if error:
+        raise tornado.gen.Return((503, 'Error connecting to postgresql as user %s: %r' % (
+            username, error
+        )))
+
+    (cursor, error), _ = yield tornado.gen.Task(conn.execute, 'SELECT 2')
+
+    if error:
+        raise tornado.gen.Return((503, 'SELECT 1 returned error: %r' % error))
+
+    # is this synchronous?
+    response = cursor.fetchall()
+    conn.close()
+    success = response == [(1,)]
+    raise tornado.gen.Return((200 if success else 503, 'PING response: %r' % response))

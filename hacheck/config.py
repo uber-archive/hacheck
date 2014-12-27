@@ -7,6 +7,8 @@ DEFAULTS = {
     'log_path': (str, 'stderr'),
     'mysql_username': (str, None),
     'mysql_password': (str, None),
+    'postgresql_username': (str, None),
+    'postgresql_password': (str, None),
 }
 
 
