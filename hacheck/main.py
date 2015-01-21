@@ -3,6 +3,7 @@ import optparse
 import signal
 import time
 import sys
+import resource
 
 import tornado.ioloop
 import tornado.httpserver
@@ -31,6 +32,17 @@ def get_app():
         (r'/recent', handlers.ListRecentHandler),
         (r'/status', handlers.StatusHandler),
     ], start_time=time.time(), log_function=log_request)
+
+
+def setrlimit_nofile(soft_target):
+    current_soft, current_hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+    if soft_target == 'max':
+        desired_fd_limit = (current_hard, current_hard)
+    elif soft_target > current_hard:
+        raise ValueError('Targeted NOFILE rlimit %d is greater than hard limit %d' % (soft_target, current_hard))
+    else:
+        desired_fd_limit = (soft_target, current_hard)
+    resource.setrlimit(resource.RLIMIT_NOFILE, desired_fd_limit)
 
 
 def main():
@@ -72,6 +84,8 @@ def main():
 
     if not opts.port:
         opts.port = [3333]
+    if config.config['rlimit_nofile'] is not None:
+        setrlimit_nofile(config.config['rlimit_nofile'])
 
     # set up logging
     log_path = config.config['log_path']

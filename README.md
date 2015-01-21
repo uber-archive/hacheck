@@ -36,6 +36,7 @@ Imagine you want to take down the server `web01` for maintenance. Just SSH to it
 * `log_path`: Either the string `"stdout"`, the string `"stderr"`, or a fully-qualified path to a file to write logs to. Uses a [WatchedFileHandler](http://docs.python.org/2/library/logging.handlers.html#watchedfilehandler) and ought to play nicely with logrotate
 * `mysql_username`: username to use when logging into mysql for checks
 * `mysql_password`: password to use when logging into mysql for checks
+* `rlimit_nofile`: set the NOFILE rlimit. If the string "max", will set the rlimit to the hard rlimit; otherwise, will be interpreted as an integer and set to that value.
 
 ### License
 
