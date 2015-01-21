@@ -114,12 +114,19 @@ def main():
     server = tornado.httpserver.HTTPServer(application, io_loop=ioloop)
 
     if initialize_mutornadomon is not None:
-        initialize_mutornadomon(application, io_loop=ioloop)
+        mutornadomon_collector = initialize_mutornadomon(application, io_loop=ioloop)
+    else:
+        mutornadomon_collector = None
+
+    def stop(*args):
+        if mutornadomon_collector is not None:
+            mutornadomon_collector.stop()
+        ioloop.stop()
 
     for port in opts.port:
         server.listen(port, opts.bind_address)
     for sig in (signal.SIGTERM, signal.SIGQUIT, signal.SIGINT):
-        signal.signal(sig, lambda *args: ioloop.stop())
+        signal.signal(sig, stop)
     ioloop.start()
     return 0
 
