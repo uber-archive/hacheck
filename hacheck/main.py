@@ -34,6 +34,17 @@ def get_app():
     ], start_time=time.time(), log_function=log_request)
 
 
+def setrlimit_nofile(soft_target):
+    current_soft, current_hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+    if soft_target == 'max':
+        desired_fd_limit = (current_hard, current_hard)
+    elif soft_target > current_hard:
+        raise ValueError('Targeted NOFILE rlimit %d is greater than hard limit %d' % (soft_target, current_hard))
+    else:
+        desired_fd_limit = (soft_target, current_hard)
+    resource.setrlimit(resource.RLIMIT_NOFILE, desired_fd_limit)
+
+
 def main():
     parser = optparse.OptionParser()
     parser.add_option(
@@ -74,10 +85,7 @@ def main():
     if not opts.port:
         opts.port = [3333]
     if config.config['rlimit_nofile'] is not None:
-        desired_fd_limit = config.config['rlimit_nofile']
-        if desired_fd_limit == 'max':
-            desired_fd_limit = resource.getrlimit(resource.RLIMIT_NOFILE)[1]
-        resource.setrlimit(resource.RLIMIT_NOFILE, desired_fd_limit)
+        setrlimit_nofile(config.config['rlimit_nofile'])
 
     # set up logging
     log_path = config.config['log_path']
