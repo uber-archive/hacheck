@@ -38,6 +38,12 @@ Imagine you want to take down the server `web01` for maintenance. Just SSH to it
 * `mysql_password`: password to use when logging into mysql for checks
 * `rlimit_nofile`: set the NOFILE rlimit. If the string "max", will set the rlimit to the hard rlimit; otherwise, will be interpreted as an integer and set to that value.
 
+### Monitoring
+
+`hacheck` exports some useful monitoring stuff at the `/status` endpoint.
+
+If the [mutornadomon](https://github.com/uber/mutornadomon) package is available, `hacheck` will import and use it, exposing standard stats about tornado to localhost at `/mutornadomon`
+
 ### License
 
 This work is licensed under the [MIT License](http://opensource.org/licenses/MIT), the contents of which can be found at [LICENSE.txt](LICENSE.txt).
