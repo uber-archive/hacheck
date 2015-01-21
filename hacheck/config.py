@@ -1,12 +1,20 @@
 import yaml
 
 
+def max_or_int(some_str_value):
+    if some_str_value == 'max':
+        return 'max'
+    else:
+        return int(some_str_value)
+
+
 DEFAULTS = {
     'cache_time': (float, 10.0),
     'service_name_header': (str, None),
     'log_path': (str, 'stderr'),
     'mysql_username': (str, None),
     'mysql_password': (str, None),
+    'rlimit_nofile': (max_or_int, None)
 }
 
 

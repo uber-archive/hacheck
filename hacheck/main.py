@@ -3,6 +3,7 @@ import optparse
 import signal
 import time
 import sys
+import resource
 
 import tornado.ioloop
 import tornado.httpserver
@@ -72,6 +73,11 @@ def main():
 
     if not opts.port:
         opts.port = [3333]
+    if config.config['rlimit_nofile'] is not None:
+        desired_fd_limit = config.config['rlimit_nofile']
+        if desired_fd_limit == 'max':
+            desired_fd_limit = resource.getrlimit(resource.RLIMIT_NOFILE)[1]
+        resource.setrlimit(resource.RLIMIT_NOFILE, desired_fd_limit)
 
     # set up logging
     log_path = config.config['log_path']
