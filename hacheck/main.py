@@ -15,6 +15,11 @@ from . import config
 from . import handlers
 from . import spool
 
+try:
+    from mutornadomon.config import initialize_mutornadomon
+except ImportError:
+    initialize_mutornadomon = None
+
 
 def log_request(handler):
     # log requests at INFO instead of WARNING for all status codes
@@ -107,6 +112,10 @@ def main():
     application = get_app()
     ioloop = tornado.ioloop.IOLoop.instance()
     server = tornado.httpserver.HTTPServer(application, io_loop=ioloop)
+
+    if initialize_mutornadomon is not None:
+        initialize_mutornadomon(application, io_loop=ioloop)
+
     for port in opts.port:
         server.listen(port, opts.bind_address)
     for sig in (signal.SIGTERM, signal.SIGQUIT, signal.SIGINT):
