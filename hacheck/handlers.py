@@ -1,3 +1,4 @@
+import collections
 import logging
 import time
 
@@ -12,7 +13,10 @@ from . import checker
 
 log = logging.getLogger('hacheck')
 
+StatusResponse = collections.namedtuple('StatusResponse', ['code', 'remote_ip', 'ts'])
+
 seen_services = {}
+last_statuses = {}
 
 
 class StatusHandler(tornado.web.RequestHandler):
@@ -28,9 +32,16 @@ class ListRecentHandler(tornado.web.RequestHandler):
     def get(self):
         now = time.time()
         recency_threshold = int(self.get_argument('threshold', 10 * 60))
-        s = set(s for s, t in seen_services.items() if now - t < recency_threshold)
+        response = []
+        for service_name, t in seen_services.iteritems():
+            if now - t > recency_threshold:
+                continue
+            last_status = last_statuses.get(service_name, None)
+            if last_status is not None:
+                last_status = last_status._asdict()
+            response.append((service_name, last_status))
         self.write({
-            'seen_services': list(sorted(s)),
+            'seen_services': list(sorted(response)),
             'threshold_seconds': recency_threshold
         })
 
@@ -57,6 +68,7 @@ class BaseServiceHandler(tornado.web.RequestHandler):
                 )
                 last_message = message
                 if code > 200:
+                    last_statuses[service_name] = StatusResponse(code, self.request.remote_ip, time.time())
                     if code in tornado.httputil.responses:
                         self.set_status(code)
                     else:
@@ -65,6 +77,7 @@ class BaseServiceHandler(tornado.web.RequestHandler):
                     self.finish()
                     break
             else:
+                last_statuses[service_name] = StatusResponse(200, self.request.remote_ip, time.time())
                 self.set_status(200)
                 self.write(last_message)
                 self.finish()
