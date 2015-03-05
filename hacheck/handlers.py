@@ -33,7 +33,7 @@ class ListRecentHandler(tornado.web.RequestHandler):
         now = time.time()
         recency_threshold = int(self.get_argument('threshold', 10 * 60))
         response = []
-        for service_name, t in seen_services.iteritems():
+        for service_name, t in seen_services.items():
             if now - t > recency_threshold:
                 continue
             last_status = last_statuses.get(service_name, None)

@@ -9,6 +9,7 @@ import os
 import pwd
 import sys
 
+import six
 from six.moves.urllib.request import urlopen
 
 import hacheck.spool
@@ -103,7 +104,7 @@ def main(default_action='status'):
         )) as f:
             resp = json.load(f)
             for s in sorted(resp['seen_services']):
-                if isinstance(s, basestring):
+                if isinstance(s, six.string_types):
                     print_s(s)
                 else:
                     service_name, last_response = s
