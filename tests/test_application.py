@@ -148,7 +148,17 @@ class ApplicationTestCase(tornado.testing.AsyncHTTPTestCase):
         self.assertEqual(200, response.code)
         response = self.fetch('/recent')
         b = json.loads(response.body.decode('utf-8'))
-        self.assertEqual(b, {'seen_services': ['foo'], 'threshold_seconds': 600})
+        self.assertEqual(
+            b,
+            {
+                'seen_services': [['foo', {'code': 200, 'ts': mock.ANY, 'remote_ip': '127.0.0.1'}]],
+                'threshold_seconds': 600
+            })
         response = self.fetch('/recent?threshold=20')
         b = json.loads(response.body.decode('utf-8'))
-        self.assertEqual(b, {'seen_services': ['foo'], 'threshold_seconds': 20})
+        self.assertEqual(
+            b,
+            {
+                'seen_services': [['foo', {'code': 200, 'ts': mock.ANY, 'remote_ip': '127.0.0.1'}]],
+                'threshold_seconds': 20
+            })
