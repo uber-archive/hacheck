@@ -9,6 +9,7 @@ import os
 import pwd
 import sys
 
+import six
 from six.moves.urllib.request import urlopen
 
 import hacheck.spool
@@ -103,7 +104,11 @@ def main(default_action='status'):
         )) as f:
             resp = json.load(f)
             for s in sorted(resp['seen_services']):
-                print_s(s)
+                if isinstance(s, six.string_types):
+                    print_s(s)
+                else:
+                    service_name, last_response = s
+                    print_s('%s last_response=%s', service_name, json.dumps(last_response))
             return 0
     elif opts.action == 'up':
         hacheck.spool.configure(opts.spool_root, needs_write=True)
