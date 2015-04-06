@@ -15,8 +15,13 @@ log = logging.getLogger('hacheck')
 
 StatusResponse = collections.namedtuple('StatusResponse', ['code', 'remote_ip', 'ts'])
 
+if hasattr(collections, 'Counter'):
+    Counter = collections.Counter  # fast
+else:
+    Counter = collections.defaultdict(lambda: 0)  # slow
+
 seen_services = {}
-service_count = collections.defaultdict(collections.Counter)
+service_count = collections.defaultdict(Counter)
 last_statuses = {}
 
 
