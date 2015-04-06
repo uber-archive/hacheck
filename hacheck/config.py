@@ -25,7 +25,7 @@ for key, (_, default) in DEFAULTS.items():
 
 def load_from(path):
     with open(path, 'r') as f:
-        c = yaml.load(f)
+        c = yaml.safe_load(f)
         for key, value in c.items():
             if key in DEFAULTS:
                 constructor, default = DEFAULTS[key]
