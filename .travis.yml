@@ -14,6 +14,10 @@ install:
     - "pip install -r requirements.txt -r requirements-tests.txt --use-mirrors"
     - "if [[ ${TRAVIS_PYTHON_VERSION::1} != '3' ]]; then pip install -r requirements-py2.txt --use-mirrors; fi"
     - "pip install tornado==$TORNADO_VERSION"
+# only build master and PRs, not every branch
+branches:
+    only:
+        - master
 script: "nosetests"
 matrix:
     fast_finish: true
