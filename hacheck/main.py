@@ -35,6 +35,7 @@ def get_app():
         (r'/mysql/([a-zA-Z0-9_-]+)/([0-9]+)/?(.*)', handlers.MySQLServiceHandler),
         (r'/spool/([a-zA-Z0-9_-]+)/([0-9]+)/?(.*)', handlers.SpoolServiceHandler),
         (r'/recent', handlers.ListRecentHandler),
+        (r'/status/count', handlers.ServiceCountHandler),
         (r'/status', handlers.StatusHandler),
     ], start_time=time.time(), log_function=log_request)
 

@@ -15,7 +15,14 @@ log = logging.getLogger('hacheck')
 
 StatusResponse = collections.namedtuple('StatusResponse', ['code', 'remote_ip', 'ts'])
 
+if hasattr(collections, 'Counter'):
+    Counter = collections.Counter  # fast
+else:
+    def Counter():
+        return collections.defaultdict(lambda: 0)
+
 seen_services = {}
+service_count = collections.defaultdict(Counter)
 last_statuses = {}
 
 
@@ -46,6 +53,11 @@ class ListRecentHandler(tornado.web.RequestHandler):
         })
 
 
+class ServiceCountHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.write({'service_access_counts': dict(service_count)})
+
+
 class BaseServiceHandler(tornado.web.RequestHandler):
     CHECKERS = []
 
@@ -53,6 +65,7 @@ class BaseServiceHandler(tornado.web.RequestHandler):
     @tornado.gen.coroutine
     def get(self, service_name, port, query):
         seen_services[service_name] = time.time()
+        service_count[service_name][self.request.remote_ip] += 1
         with cache.maybe_bust(self.request.headers.get('Pragma', '') == 'no-cache'):
             port = int(port)
             last_message = ""
