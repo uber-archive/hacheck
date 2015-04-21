@@ -27,7 +27,7 @@ install_requires, dependency_links = get_install_requirements()
 
 setup(
     name="hacheck",
-    version="0.8.0",
+    version="0.9.0",
     author="James Brown",
     author_email="jbrown@uber.com",
     url="https://github.com/uber/hacheck",
@@ -52,6 +52,7 @@ setup(
         "Development Status :: 3 - Alpha",
         "Environment :: Web Environment",
         "Programming Language :: Python",
+        "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.2",
         "Programming Language :: Python :: 3.3",
