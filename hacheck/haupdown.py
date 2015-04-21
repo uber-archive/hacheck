@@ -40,7 +40,7 @@ def print_s(fmt_string, *formats):
     print(fmt_string % formats)
 
 
-def main(default_action='status'):
+def main(default_action='list'):
     ACTIONS = ('up', 'down', 'status', 'status_downed', 'list')
     parser = optparse.OptionParser(usage='%prog [options] service_name(s)')
     parser.add_option(
@@ -93,7 +93,12 @@ def main(default_action='status'):
             return 1
 
     if opts.action in ('status', 'up', 'down'):
+        if not args:
+            parser.error('Expected args for action %s' % (opts.action))
         service_names = args
+    else:
+        if args:
+            parser.error('Unexpected args for action %s: %r' % (opts.action, args))
 
     if opts.action == 'list':
         with contextlib.closing(urlopen(
