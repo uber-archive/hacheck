@@ -28,6 +28,7 @@ class ApplicationTestCase(tornado.testing.AsyncHTTPTestCase):
         self.config_file.write(yaml.dump(mock_config).encode('utf-8'))
         self.config_file.flush()
         spool.configure(spool_root=self.spool)
+        handlers._reset_stats()
         super(ApplicationTestCase, self).setUp()
 
     def tearDown(self):
@@ -44,6 +45,19 @@ class ApplicationTestCase(tornado.testing.AsyncHTTPTestCase):
         self.assertEqual('application/json; charset=UTF-8', response.headers['Content-Type'])
         result = json.loads(response.body.decode('utf-8'))
         self.assertGreater(result['uptime'], 0.0)
+
+    def test_status_count(self):
+        response = self.fetch('/status/count')
+        self.assertEqual('application/json; charset=UTF-8', response.headers['Content-Type'])
+        result = json.loads(response.body.decode('utf-8'))
+        self.assertEqual(result['service_access_counts'], {})
+        with mock.patch.object(spool, 'is_up', return_value=(True, {"reason": b'YES'})):
+            response = self.fetch('/spool/foo/1/status')
+            self.assertEqual(response.code, 200)
+            self.assertEqual(response.body, b'YES')
+        response = self.fetch('/status/count')
+        result = json.loads(response.body.decode('utf-8'))
+        self.assertEqual(result['service_access_counts'], {'foo': {'127.0.0.1': 1}})
 
     def test_routing(self):
         with mock.patch.object(handlers.HTTPServiceHandler, 'get') as m:

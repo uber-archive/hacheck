@@ -26,6 +26,12 @@ service_count = collections.defaultdict(Counter)
 last_statuses = {}
 
 
+def _reset_stats():
+    seen_services.clear()
+    service_count.clear()
+    last_statuses.clear()
+
+
 class StatusHandler(tornado.web.RequestHandler):
     def get(self):
         stats = {}
