@@ -42,7 +42,7 @@ def print_s(fmt_string, *formats):
 
 def main(default_action='status'):
     ACTIONS = ('up', 'down', 'status', 'status_downed', 'list')
-    parser = optparse.OptionParser(usage='%prog [options] service_name')
+    parser = optparse.OptionParser(usage='%prog [options] service_name(s)')
     parser.add_option(
         '--spool-root',
         default='/var/spool/hacheck',
@@ -93,9 +93,7 @@ def main(default_action='status'):
             return 1
 
     if opts.action in ('status', 'up', 'down'):
-        if len(args) != 1:
-            parser.error('Wrong number of arguments')
-        service_name = args[0]
+        service_names = args
 
     if opts.action == 'list':
         with contextlib.closing(urlopen(
@@ -112,11 +110,13 @@ def main(default_action='status'):
             return 0
     elif opts.action == 'up':
         hacheck.spool.configure(opts.spool_root, needs_write=True)
-        hacheck.spool.up(service_name)
+        for service_name in service_names:
+            hacheck.spool.up(service_name)
         return 0
     elif opts.action == 'down':
         hacheck.spool.configure(opts.spool_root, needs_write=True)
-        hacheck.spool.down(service_name, opts.reason)
+        for service_name in service_names:
+            hacheck.spool.down(service_name, opts.reason)
         return 0
     elif opts.action == 'status_downed':
         hacheck.spool.configure(opts.spool_root, needs_write=False)
@@ -125,13 +125,15 @@ def main(default_action='status'):
         return 0
     else:
         hacheck.spool.configure(opts.spool_root, needs_write=False)
-        status, info = hacheck.spool.status(service_name)
-        if status:
-            print_s('UP\t%s', service_name)
-            return 0
-        else:
-            print_s('DOWN\t%s\t%s', service_name, info.get('reason', ''))
-            return 1
+        rv = 0
+        for service_name in service_names:
+            status, info = hacheck.spool.status(service_name)
+            if status:
+                print_s('UP\t%s', service_name)
+            else:
+                print_s('DOWN\t%s\t%s', service_name, info.get('reason', ''))
+                rv = 1
+        return rv
 
 
 if __name__ == '__main__':
