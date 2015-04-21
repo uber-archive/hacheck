@@ -40,7 +40,7 @@ Imagine you want to take down the server `web01` for maintenance. Just SSH to it
 
 ### Monitoring
 
-`hacheck` exports some useful monitoring stuff at the `/status` endpoint.
+`hacheck` exports some useful monitoring stuff at the `/status` endpoint. It also exports a count of requests by source-IP and service name on the `/status/count` endpoint.
 
 If the [mutornadomon](https://github.com/uber/mutornadomon) package is available, `hacheck` will import and use it, exposing standard stats about tornado to localhost at `/mutornadomon`
 
