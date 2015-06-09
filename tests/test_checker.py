@@ -108,15 +108,31 @@ class TestHTTPChecker(tornado.testing.AsyncHTTPTestCase):
 
 
 class TestServer(tornado.tcpserver.TCPServer):
+    def __init__(self, io_loop, response='hello\n'):
+      self.response = response
+      super(TestServer, self).__init__(io_loop=io_loop)
+
     @tornado.gen.coroutine
-    def handle_stream(stream):
-        yield stream.write('hello')
+    def handle_stream(self, stream, address):
+        yield stream.write(self.response)
         stream.close()
 
 
 class TestTCPChecker(tornado.testing.AsyncTestCase):
     def setUp(self):
         super(TestTCPChecker, self).setUp()
+        socket, port = tornado.testing.bind_unused_port()
+        self.server = TestServer(io_loop=self.io_loop)
+        self.server.add_socket(socket)
+        self.socket = socket
+        self.port = port
+        unlistened_socket, unlistened_port = bind_synchronous_unused_port()
+        self.unlistened_socket = unlistened_socket
+        self.unlistened_port = unlistened_port
+
+class TestRedisChecker(tornado.testing.AsyncTestCase):
+    def setUp(self):
+        super(TestRedisChecker, self).setUp()
         socket, port = tornado.testing.bind_unused_port()
         self.server = TestServer(io_loop=self.io_loop)
         self.server.add_socket(socket)
