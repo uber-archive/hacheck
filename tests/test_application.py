@@ -12,6 +12,7 @@ import yaml
 from hacheck import main
 from hacheck import spool
 from hacheck import cache
+from hacheck import config
 from hacheck import handlers
 
 
@@ -176,3 +177,29 @@ class ApplicationTestCase(tornado.testing.AsyncHTTPTestCase):
                 'seen_services': [['foo', {'code': 200, 'ts': mock.ANY, 'remote_ip': '127.0.0.1'}]],
                 'threshold_seconds': 20
             })
+
+    def test_remote_spool_check_forbidden(self):
+        with mock.patch.dict(config.config, {'allow_remote_spool_changes': False}):
+            response = self.fetch('/spool/foo/1/status', method='POST', body="")
+            self.assertEqual(response.code, 403)
+
+    def test_spool_post(self):
+        with nested(
+            mock.patch.dict(config.config, {'allow_remote_spool_changes': True}),
+            mock.patch.object(spool, 'up'),
+            mock.patch.object(spool, 'down'),
+                ) as (_1, spool_up, spool_down):
+
+            response = self.fetch('/spool/foo/0/status', method='POST', body="status=up")
+            self.assertEqual(response.code, 200)
+            spool_up.assert_called_once_with('foo', port=None)
+
+            response = self.fetch('/spool/foo/1234/status', method='POST', body="status=down&reason=because")
+            self.assertEqual(response.code, 200)
+            spool_down.assert_called_once_with('foo', reason='because', port=1234, expiration=None)
+
+            spool_down.reset_mock()
+            response = self.fetch('/spool/foo/1234/status', method='POST',
+                                  body="status=down&reason=because&expiration=1")
+            self.assertEqual(response.code, 200)
+            spool_down.assert_called_once_with('foo', reason='because', port=1234, expiration=1)

@@ -10,6 +10,8 @@ import tornado.web
 
 from . import cache
 from . import checker
+from . import config
+from . import spool
 
 log = logging.getLogger('hacheck')
 
@@ -104,6 +106,31 @@ class BaseServiceHandler(tornado.web.RequestHandler):
 
 class SpoolServiceHandler(BaseServiceHandler):
     CHECKERS = [checker.check_spool]
+
+    def post(self, service_name, port, query):
+        if not config.config['allow_remote_spool_changes']:
+            self.set_status(403)
+            self.write('remote spool changes are not enabled')
+            return
+
+        port = int(port) or None
+        status = self.get_argument('status')
+
+        if status == 'up':
+            spool.up(service_name, port=port)
+        elif status == 'down':
+            expiration = self.get_argument('expiration', None)
+            if expiration is not None:
+                expiration = float(expiration)
+            reason = self.get_argument('reason')
+            spool.down(service_name, reason=reason, port=port, expiration=expiration)
+        else:
+            self.set_status(400)
+            self.write("status must be up or down")
+            return
+
+        self.set_status(200)
+        self.write("")
 
 
 class HTTPServiceHandler(BaseServiceHandler):
