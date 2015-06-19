@@ -47,17 +47,19 @@ class EchoParamFoo(tornado.web.RequestHandler):
 
 class TestChecker(TestCase):
     def test_spool_success(self):
-        with mock.patch.object(spool, 'is_up', return_value=(True, {})):
+        with mock.patch.object(spool, 'is_up', return_value=(True, {})) as is_up_patch:
             fut = checker.check_spool(se.name, se.port, se.query, None, query_params=None, headers={})
             self.assertIsInstance(fut, tornado.concurrent.Future)
             self.assertTrue(fut.done())
             res = fut.result()
             self.assertEqual(res[0], 200)
+            is_up_patch.assert_called_once_with(se.name, port=se.port)
 
     def test_spool_failure(self):
-        with mock.patch.object(spool, 'is_up', return_value=(False, {'service': se.service})):
+        with mock.patch.object(spool, 'is_up', return_value=(False, {'service': se.service})) as is_up_patch:
             fut = checker.check_spool(se.name, se.port, se.query, None, query_params=None, headers={})
             self.assertEqual(fut.result()[0], 503)
+            is_up_patch.assert_called_once_with(se.name, port=se.port)
 
 
 class TestHTTPChecker(tornado.testing.AsyncHTTPTestCase):

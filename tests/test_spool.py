@@ -36,9 +36,15 @@ class TestSpool(TestCase):
     def test_basic(self):
         svcname = 'test_basic'
         self.assertEquals(True, spool.status(svcname)[0])
+        self.assertEquals(True, spool.status(svcname, 1234)[0])
+        spool.down(svcname, port=1234)
+        self.assertEquals(True, spool.status(svcname)[0])
+        self.assertEquals(False, spool.status(svcname, 1234)[0])
         spool.down(svcname)
         self.assertEquals(False, spool.status(svcname)[0])
         self.assertEquals(False, spool.is_up(svcname)[0])
+        spool.up(svcname, port=1234)
+        self.assertEquals(True, spool.status(svcname, 1234)[0])
         spool.up(svcname)
         self.assertEquals(True, spool.status(svcname)[0])
 
@@ -52,8 +58,48 @@ class TestSpool(TestCase):
     def test_status_all_down(self):
         self.assertEqual(len(list(spool.status_all_down())), 0)
         spool.down('foo')
-        self.assertEqual(list(spool.status_all_down()), [('foo', {'service': 'foo', 'reason': ''})])
+        self.assertEqual(list(spool.status_all_down()), [('foo', {'service': 'foo', 'reason': '', 'expiration': None})])
 
     def test_repeated_ups_works(self):
         spool.up('all')
         spool.up('all')
+
+    def test_spool_file_path(self):
+        self.assertEqual(os.path.join(self.root, 'foo:1234'), spool.spool_file_path("foo", port=1234))
+        self.assertEqual(os.path.join(self.root, 'foo'), spool.spool_file_path("foo", None))
+
+    def test_parse_spool_file_path(self):
+        self.assertEqual(("foo", 1234), spool.parse_spool_file_path(spool.spool_file_path("foo", 1234)))
+
+    def test_serialize_spool_file_contents(self):
+        actual = spool.serialize_spool_file_contents("hi", 12345)
+        assert '"reason": "hi"' in actual
+        assert '"expiration": 12345' in actual
+
+    def test_deserialize_spool_file_contents_legacy(self):
+        actual = spool.deserialize_spool_file_contents("this is a reason")
+        self.assertEqual(actual, {"reason": "this is a reason", "expiration": None})
+
+    def test_deserialize_spool_file_contents_new(self):
+        actual = spool.deserialize_spool_file_contents('{"reason": "hi", "expiration": 12345}')
+        self.assertEqual(actual, {"reason": "hi", "expiration": 12345})
+
+    def test_status_expiration(self):
+        svcname = 'test_status_expiration'
+        now = 1000
+        future = now + 10
+        past = now - 10
+
+        with mock.patch('time.time', return_value=now):
+            self.assertEquals(True, spool.status(svcname)[0])
+
+            # First, check with expiration in future; everything should behave normally.
+            spool.down(svcname, expiration=future)
+            self.assertEquals(False, spool.status(svcname)[0])
+
+            # Now, let's make sure we remove the spool file if its expiration is in the past.
+            spool.down(svcname, expiration=past)
+            self.assertEquals(True, os.path.exists(spool.spool_file_path(svcname, None)))
+
+            self.assertEquals(True, spool.status(svcname)[0])
+            self.assertEquals(False, os.path.exists(spool.spool_file_path(svcname, None)))
