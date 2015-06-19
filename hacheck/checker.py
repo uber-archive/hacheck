@@ -16,8 +16,6 @@ from . import __version__
 
 TIMEOUT = 10
 
-HTTP_HEADERS_TO_COPY = ('Host',)
-
 
 class Timeout(Exception):
     pass
@@ -84,7 +82,7 @@ def check_http(service_name, port, check_path, io_loop, query_params, headers):
     if not check_path.startswith("/"):
         check_path = "/" + check_path  # pragma: no cover
     headers_out = {'User-Agent': 'hastate %s' % (__version__)}
-    for header in HTTP_HEADERS_TO_COPY:
+    for header in config.config['http_headers_to_copy']:
         if header in headers:
             headers_out[header] = headers[header]
     if config.config['service_name_header']:
