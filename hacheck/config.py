@@ -15,7 +15,7 @@ DEFAULTS = {
     'mysql_username': (str, None),
     'mysql_password': (str, None),
     'rlimit_nofile': (max_or_int, None),
-    'http_headers_to_copy': (list, 'Host')
+    'http_headers_to_copy': (list, ['Host'])
 }
 
 
