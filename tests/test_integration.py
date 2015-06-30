@@ -68,7 +68,7 @@ class TestIntegration(tornado.testing.AsyncHTTPTestCase):
         hacheck.spool.down('test_app', 'TESTING')
         response = self.fetch('/http/test_app/%d/pinged' % self.get_http_port())
         self.assertEqual(503, response.code)
-        self.assertEqual(b'Service test_app in down state: TESTING', response.body)
+        self.assertRegexpMatches(response.body, b'^Service test_app in down state since (\d|\.)*: TESTING$')
         hacheck.spool.up('test_app')
         response = self.fetch('/http/test_app/%d/pinged' % self.get_http_port())
         self.assertEqual(b'PONG', response.body)
