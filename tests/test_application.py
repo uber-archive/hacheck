@@ -196,10 +196,10 @@ class ApplicationTestCase(tornado.testing.AsyncHTTPTestCase):
 
             response = self.fetch('/spool/foo/1234/status', method='POST', body="status=down&reason=because")
             self.assertEqual(response.code, 200)
-            spool_down.assert_called_once_with('foo', reason='because', port=1234, expiration=None)
+            spool_down.assert_called_once_with('foo', reason='because', port=1234, expiration=None, creation=None)
 
             spool_down.reset_mock()
             response = self.fetch('/spool/foo/1234/status', method='POST',
-                                  body="status=down&reason=because&expiration=1")
+                                  body="status=down&reason=because&expiration=1&creation=2")
             self.assertEqual(response.code, 200)
-            spool_down.assert_called_once_with('foo', reason='because', port=1234, expiration=1)
+            spool_down.assert_called_once_with('foo', reason='because', port=1234, expiration=1, creation=2)

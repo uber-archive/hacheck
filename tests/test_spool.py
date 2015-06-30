@@ -58,7 +58,10 @@ class TestSpool(TestCase):
     def test_status_all_down(self):
         self.assertEqual(len(list(spool.status_all_down())), 0)
         spool.down('foo')
-        self.assertEqual(list(spool.status_all_down()), [('foo', {'service': 'foo', 'reason': '', 'expiration': None})])
+        self.assertEqual(
+            list(spool.status_all_down()),
+            [('foo', {'service': 'foo', 'reason': '', 'expiration': None, 'creation': mock.ANY})]
+        )
 
     def test_repeated_ups_works(self):
         spool.up('all')
@@ -72,17 +75,29 @@ class TestSpool(TestCase):
         self.assertEqual(("foo", 1234), spool.parse_spool_file_path(spool.spool_file_path("foo", 1234)))
 
     def test_serialize_spool_file_contents(self):
-        actual = spool.serialize_spool_file_contents("hi", 12345)
+        actual = spool.serialize_spool_file_contents("hi", expiration=12345, creation=54321)
         assert '"reason": "hi"' in actual
         assert '"expiration": 12345' in actual
+        assert '"creation": 54321' in actual
 
     def test_deserialize_spool_file_contents_legacy(self):
         actual = spool.deserialize_spool_file_contents("this is a reason")
-        self.assertEqual(actual, {"reason": "this is a reason", "expiration": None})
+        self.assertEqual(actual, {"reason": "this is a reason", "expiration": None, "creation": None})
 
     def test_deserialize_spool_file_contents_new(self):
-        actual = spool.deserialize_spool_file_contents('{"reason": "hi", "expiration": 12345}')
-        self.assertEqual(actual, {"reason": "hi", "expiration": 12345})
+        actual = spool.deserialize_spool_file_contents('{"reason": "hi", "expiration": 12345, "creation": 12344}')
+        self.assertEqual(actual, {"reason": "hi", "expiration": 12345, "creation": 12344})
+
+    def test_status_creation(self):
+        now = 1000
+        svcname = 'test_status_creation'
+
+        with mock.patch('time.time', return_value=now):
+            spool.down(svcname)
+            up, info_dict = spool.status(svcname)
+            spool.up(svcname)
+
+        self.assertEqual(info_dict['creation'], 1000)
 
     def test_status_expiration(self):
         svcname = 'test_status_expiration'

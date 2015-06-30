@@ -123,7 +123,10 @@ class SpoolServiceHandler(BaseServiceHandler):
             if expiration is not None:
                 expiration = float(expiration)
             reason = self.get_argument('reason')
-            spool.down(service_name, reason=reason, port=port, expiration=expiration)
+            creation = self.get_argument('creation', None)
+            if creation is not None:
+                creation = float(creation)
+            spool.down(service_name, reason=reason, port=port, expiration=expiration, creation=creation)
         else:
             self.set_status(400)
             self.write("status must be up or down")

@@ -29,10 +29,11 @@ def parse_spool_file_path(path):
     return service_name, port
 
 
-def serialize_spool_file_contents(reason, expiration=None):
+def serialize_spool_file_contents(reason, expiration=None, creation=None):
     return json.dumps({
         "reason": reason,
         "expiration": expiration,
+        "creation": (time.time() if creation is None else creation),
     })
 
 
@@ -44,6 +45,7 @@ def deserialize_spool_file_contents(contents):
         return {
             "reason": contents,
             "expiration": None,
+            "creation": None,
         }
 
 
@@ -115,6 +117,6 @@ def up(service_name, port=None):
         pass
 
 
-def down(service_name, reason="", port=None, expiration=None):
+def down(service_name, reason="", port=None, expiration=None, creation=None):
     with open(spool_file_path(service_name, port), 'w') as f:
-        f.write(serialize_spool_file_contents(reason, expiration))
+        f.write(serialize_spool_file_contents(reason, expiration=expiration, creation=creation))
