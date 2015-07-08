@@ -144,6 +144,28 @@ class ApplicationTestCase(tornado.testing.AsyncHTTPTestCase):
             response = self.fetch('/http/uncached-weird-code/80/status')
             self.assertEqual(503, response.code)
 
+    def test_haproxy_server_state(self):
+        rv = tornado.concurrent.Future()
+        rv.set_result((200, b'OK'))
+        checker = mock.Mock(return_value=rv)
+        server_state = 'UP 2/3; addr=srv1; port=1234; name=bck/srv2; node=lb1; weight=1/2; scur=13/22; qcur=0'
+        with mock.patch.object(handlers.HTTPServiceHandler, 'CHECKERS', [checker]):
+            response = self.fetch('/http/foo/1/status', headers={'X-Haproxy-Server-State': server_state})
+            self.assertEqual(200, response.code)
+            args, _ = checker.call_args
+            assert args[1] == 1234
+
+    def test_old_haproxy_server_state_ignored(self):
+        rv = tornado.concurrent.Future()
+        rv.set_result((200, b'OK'))
+        checker = mock.Mock(return_value=rv)
+        server_state = 'UP 2/3; name=bck/srv2; node=lb1; weight=1/2; scur=13/22; qcur=0'
+        with mock.patch.object(handlers.HTTPServiceHandler, 'CHECKERS', [checker]):
+            response = self.fetch('/http/foo/1/status', headers={'X-Haproxy-Server-State': server_state})
+            self.assertEqual(200, response.code)
+            args, _ = checker.call_args
+            assert args[1] == 1
+
     def test_option_parsing(self):
         with nested(
             mock.patch('sys.argv', ['ignorethis', '-c', self.config_file.name, '--spool-root', 'foo']),
