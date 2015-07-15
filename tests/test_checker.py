@@ -149,9 +149,9 @@ class TestTCPChecker(tornado.testing.AsyncTestCase):
             response = yield checker.check_tcp("foo", self.unlistened_port, None, io_loop=self.io_loop, query_params="", headers={})
             self.assertEqual(response[0], 503)
 
-class TestRedisChecker(tornado.testing.AsyncTestCase):
+class TestRedisSentinelChecker(tornado.testing.AsyncTestCase):
     def setUp(self):
-        super(TestRedisChecker, self).setUp()
+        super(TestRedisSentinelChecker, self).setUp()
         socket, port = tornado.testing.bind_unused_port()
         self.server = TestServer(io_loop=self.io_loop)
         self.server.add_socket(socket)
@@ -162,7 +162,7 @@ class TestRedisChecker(tornado.testing.AsyncTestCase):
         self.unlistened_port = unlistened_port
 
     def tearDown(self):
-        super(TestRedisChecker, self).tearDown()
+        super(TestRedisSentinelChecker, self).tearDown()
         try:
             self.server.stop()
             self.socket.close()
@@ -172,13 +172,13 @@ class TestRedisChecker(tornado.testing.AsyncTestCase):
     @tornado.testing.gen_test
     def test_check_success(self):
         with mock.patch.object(self.server, 'response', b'+PONG\r\n'):
-            response = yield checker.check_redis("foo", self.port, None, io_loop=self.io_loop, query_params="", headers={})
+            response = yield checker.check_redis_sentinel("foo", self.port, None, io_loop=self.io_loop, query_params="", headers={})
             self.assertEqual(200, response[0], response[1])
 
     @tornado.testing.gen_test
     def test_check_error(self):
         with mock.patch.object(self.server, 'response', b'WAT\r\n'):
-            response = yield checker.check_redis("foo", self.port, None, io_loop=self.io_loop, query_params="", headers={})
+            response = yield checker.check_redis_sentinel("foo", self.port, None, io_loop=self.io_loop, query_params="", headers={})
             self.assertEqual(500, response[0])
 
     @tornado.testing.gen_test

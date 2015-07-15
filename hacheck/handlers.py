@@ -118,5 +118,5 @@ class MySQLServiceHandler(BaseServiceHandler):
     CHECKERS = [checker.check_spool, checker.check_mysql]
 
 
-class RedisServiceHandler(BaseServiceHandler):
-    CHECKERS = [checker.check_spool, checker.check_redis]
+class RedisSentinelServiceHandler(BaseServiceHandler):
+    CHECKERS = [checker.check_spool, checker.check_redis_sentinel]

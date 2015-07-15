@@ -163,10 +163,9 @@ def check_mysql(service_name, port, query, io_loop, query_params, headers):
 
 @cache.cached
 @tornado.gen.coroutine
-def check_redis(service_name, port, query, io_loop, query_params, headers):
+def check_redis_sentinel(service_name, port, query, io_loop, query_params, headers):
     stream = None
     connect_start = time.time()
-
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
     try:
         stream = tornado.iostream.IOStream(s, io_loop=io_loop)
@@ -175,21 +174,40 @@ def check_redis(service_name, port, query, io_loop, query_params, headers):
             args=[('127.0.0.1', port)],
             timeout_secs=TIMEOUT
         )
-        yield stream.write(b'PING\r\n')
-        response = stream.read_until(b'\n').result()
-        stream.close()
-        if response.strip() != b'+PONG':
-            raise tornado.gen.Return((500, 'Sent PING, got back %s' % response))
-        else:
-            raise tornado.gen.Return((200, 'Sent PING, got back +PONG'))
+
+        if "3." in tornado.version:
+            #Tornado V3"
+            redis_future = tornado.concurrent.Future()
+
+            def write_callback():
+                def read_callback(data):
+                    stream.close()
+                    if data.strip() != b'+PONG':
+                        redis_future.set_result((500, 'Sent PING, got back %s' % data))
+                    else:
+                        redis_future.set_result((200, 'Sent PING, got back +PONG'))
+
+                stream.read_until(b'\n', read_callback)
+            stream.write(b'PING\r\n', write_callback)
+
+            result = yield redis_future
+            raise tornado.gen.Return(result)
+
+        elif "4." in tornado.version:
+            #Tornado V4"
+            yield stream.write(b'PING\r\n')
+            data = yield stream.read_until(b'\n')
+            stream.close()
+            if data.strip() != b'+PONG':
+                raise tornado.gen.Return((500, 'Sent PING, got back %s' % data))
+            else:
+                raise tornado.gen.Return((200, 'Sent PING, got back +PONG'))
+
     except Timeout:
         raise tornado.gen.Return((
             503,
             'Connection timed out after %.2fs' % (time.time() - connect_start)
         ))
-    finally:
-        if stream:
-            stream.close()
     raise tornado.gen.Return((
         200,
         'Connected in %.2fs' % (time.time() - connect_start)
