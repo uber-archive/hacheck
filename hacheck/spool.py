@@ -118,5 +118,13 @@ def up(service_name, port=None):
 
 
 def down(service_name, reason="", port=None, expiration=None, creation=None):
+    currently_up, info = status(service_name, port=port)
+
+    # If we already downed the service for the same reason, leave the creation time alone. This allows a user to
+    # repeatedly down a service to refresh its expiration time, and we will keep track of how long it has been down
+    # for.
+    if creation is None and (not currently_up) and reason == info['reason']:
+        creation = info.get('creation', creation)
+
     with open(spool_file_path(service_name, port), 'w') as f:
         f.write(serialize_spool_file_contents(reason, expiration=expiration, creation=creation))

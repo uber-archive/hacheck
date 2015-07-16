@@ -118,3 +118,49 @@ class TestSpool(TestCase):
 
             self.assertEquals(True, spool.status(svcname)[0])
             self.assertEquals(False, os.path.exists(spool.spool_file_path(svcname, None)))
+
+    def test_repeated_downs_leaves_original_creation_time(self):
+        first_creation = 1000
+        first_expiration = first_creation + 60
+        second_creation = first_creation + 10
+        second_expiration = second_creation + 60
+        with mock.patch('time.time', return_value=first_creation):
+            spool.down('all', expiration=first_expiration)
+        with mock.patch('time.time', return_value=second_creation):
+            spool.down('all', expiration=second_expiration)
+
+        with mock.patch('time.time', return_value=second_creation):
+            _, info = spool.status('all')
+
+        self.assertEquals(info['creation'], first_creation)
+        self.assertEquals(info['expiration'], second_expiration)
+
+    def test_repeated_downs_with_different_reason_changes_creation_time(self):
+        first_creation = 1000
+        first_expiration = first_creation + 60
+        second_creation = first_creation + 10
+        second_expiration = second_creation + 60
+        with mock.patch('time.time', return_value=first_creation):
+            spool.down('all', reason="first reason", expiration=first_expiration)
+        with mock.patch('time.time', return_value=second_creation):
+            spool.down('all', reason="second reason", expiration=second_expiration)
+
+        with mock.patch('time.time', return_value=second_creation):
+            _, info = spool.status('all')
+
+        self.assertEquals(info['creation'], second_creation)
+        self.assertEquals(info['expiration'], second_expiration)
+
+    def test_repeated_downs_with_creation_arg_changes_creation_time(self):
+        first_creation = 1000
+        first_expiration = first_creation + 60
+        second_creation = first_creation + 10
+        second_expiration = second_creation + 60
+        spool.down('all', creation=first_creation, expiration=first_expiration)
+        spool.down('all', creation=second_creation, expiration=second_expiration)
+
+        with mock.patch('time.time', return_value=second_creation):
+            _, info = spool.status('all')
+
+        self.assertEquals(info['creation'], second_creation)
+        self.assertEquals(info['expiration'], second_expiration)
