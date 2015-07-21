@@ -60,7 +60,7 @@ class TestSpool(TestCase):
         spool.down('foo')
         self.assertEqual(
             list(spool.status_all_down()),
-            [('foo', {'service': 'foo', 'reason': '', 'expiration': None, 'creation': mock.ANY})]
+            [('foo', None, {'service': 'foo', 'reason': '', 'expiration': None, 'creation': mock.ANY})]
         )
 
     def test_repeated_ups_works(self):

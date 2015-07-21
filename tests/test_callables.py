@@ -80,13 +80,13 @@ class TestCallable(TestCase):
         with self.setup_wrapper([sentinel_service_name]) as (spooler, mock_print):
             spooler.status.return_value = (True, {})
             hacheck.haupdown.status()
-            spooler.status.assert_called_once_with(sentinel_service_name)
+            spooler.status.assert_called_once_with(sentinel_service_name, port=None)
             mock_print.assert_called_once_with("UP\t%s", sentinel_service_name)
 
     def test_status_downed(self):
         with self.setup_wrapper() as (spooler, mock_print):
             spooler.status_all_down.return_value = [
-                (sentinel_service_name, {'service': sentinel_service_name, 'reason': '', 'expiration': None})
+                (sentinel_service_name, None, {'service': sentinel_service_name, 'reason': '', 'expiration': None})
             ]
             self.assertEqual(hacheck.haupdown.status_downed(), 0)
             mock_print.assert_called_once_with("DOWN\t%f\t%s\t%s", float('Inf'), sentinel_service_name, mock.ANY)
@@ -94,7 +94,11 @@ class TestCallable(TestCase):
     def test_status_downed_expiration(self):
         with self.setup_wrapper() as (spooler, mock_print):
             spooler.status_all_down.return_value = [
-                (sentinel_service_name, {'service': sentinel_service_name, 'reason': '', 'expiration': 9876543210})
+                (
+                    sentinel_service_name,
+                    None,
+                    {'service': sentinel_service_name, 'reason': '', 'expiration': 9876543210}
+                ),
             ]
             self.assertEqual(hacheck.haupdown.status_downed(), 0)
             mock_print.assert_called_once_with("DOWN\t%f\t%s\t%s", 9876543210, sentinel_service_name, mock.ANY)
@@ -109,3 +113,16 @@ class TestCallable(TestCase):
                 self.assertEqual(hacheck.haupdown.halist(), 0)
                 mock_urlopen.assert_called_once_with('http://127.0.0.1:3333/recent', timeout=mock.ANY)
                 mock_print.assert_called_once_with("foo")
+
+    def test_print_status(self):
+        with self.setup_wrapper() as (spooler, mock_print):
+            hacheck.haupdown.print_status('foo', None, True, {})
+            mock_print.assert_called_once_with('UP\t%s', 'foo')
+
+        with self.setup_wrapper() as (spooler, mock_print):
+            hacheck.haupdown.print_status('foo', None, False, {'reason': 'somereason'})
+            mock_print.assert_called_once_with('DOWN\t%f\t%s\t%s', float('Inf'), 'foo', 'somereason')
+
+        with self.setup_wrapper() as (spooler, mock_print):
+            hacheck.haupdown.print_status('foo', 1234, False, {'reason': 'somereason'})
+            mock_print.assert_called_once_with('DOWN\t%f\t%s:%d\t%s', float('Inf'), 'foo', 1234, 'somereason')

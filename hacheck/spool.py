@@ -107,7 +107,7 @@ def status_all_down():
         service_name, port = parse_spool_file_path(filename)
         up, info = status(service_name, port=port)
         if not up:
-            yield service_name, info
+            yield service_name, port, info
 
 
 def up(service_name, port=None):
