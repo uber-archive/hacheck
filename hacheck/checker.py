@@ -1,6 +1,7 @@
 import datetime
 import socket
 import time
+import re
 
 import tornado.concurrent
 import tornado.ioloop
@@ -175,7 +176,7 @@ def check_redis_sentinel(service_name, port, query, io_loop, query_params, heade
             timeout_secs=TIMEOUT
         )
 
-        if "3." in tornado.version:
+        if re.match(r'(3.)', tornado.version) is not None:
             #Tornado V3"
             redis_future = tornado.concurrent.Future()
 
@@ -193,7 +194,7 @@ def check_redis_sentinel(service_name, port, query, io_loop, query_params, heade
             result = yield redis_future
             raise tornado.gen.Return(result)
 
-        elif "4." in tornado.version:
+        if re.match(r'(4.)', tornado.version) is not None:
             #Tornado V4"
             yield stream.write(b'PING\r\n')
             data = yield stream.read_until(b'\n')
