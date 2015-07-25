@@ -27,7 +27,7 @@ install_requires, dependency_links = get_install_requirements()
 
 setup(
     name="hacheck",
-    version="0.9.0",
+    version="0.10.0",
     author="James Brown",
     author_email="jbrown@uber.com",
     url="https://github.com/uber/hacheck",

@@ -108,9 +108,13 @@ class TestHTTPChecker(tornado.testing.AsyncHTTPTestCase):
 
 
 class TestServer(tornado.tcpserver.TCPServer):
+    def __init__(self, io_loop, response='hello\n'):
+      self.response = response
+      super(TestServer, self).__init__(io_loop=io_loop)
+
     @tornado.gen.coroutine
-    def handle_stream(stream):
-        yield stream.write('hello')
+    def handle_stream(self, stream, address):
+        yield stream.write(self.response)
         stream.close()
 
 
@@ -141,6 +145,44 @@ class TestTCPChecker(tornado.testing.AsyncTestCase):
 
     @tornado.testing.gen_test
     def test_check_failure(self):
+        with mock.patch.object(checker, 'TIMEOUT', 1):
+            response = yield checker.check_tcp("foo", self.unlistened_port, None, io_loop=self.io_loop, query_params="", headers={})
+            self.assertEqual(response[0], 503)
+
+class TestRedisSentinelChecker(tornado.testing.AsyncTestCase):
+    def setUp(self):
+        super(TestRedisSentinelChecker, self).setUp()
+        socket, port = tornado.testing.bind_unused_port()
+        self.server = TestServer(io_loop=self.io_loop)
+        self.server.add_socket(socket)
+        self.socket = socket
+        self.port = port
+        unlistened_socket, unlistened_port = bind_synchronous_unused_port()
+        self.unlistened_socket = unlistened_socket
+        self.unlistened_port = unlistened_port
+
+    def tearDown(self):
+        super(TestRedisSentinelChecker, self).tearDown()
+        try:
+            self.server.stop()
+            self.socket.close()
+        except Exception:
+            pass
+
+    @tornado.testing.gen_test
+    def test_check_success(self):
+        with mock.patch.object(self.server, 'response', b'+PONG\r\n'):
+            response = yield checker.check_redis_sentinel("foo", self.port, None, io_loop=self.io_loop, query_params="", headers={})
+            self.assertEqual(200, response[0], response[1])
+
+    @tornado.testing.gen_test
+    def test_check_error(self):
+        with mock.patch.object(self.server, 'response', b'WAT\r\n'):
+            response = yield checker.check_redis_sentinel("foo", self.port, None, io_loop=self.io_loop, query_params="", headers={})
+            self.assertEqual(500, response[0])
+
+    @tornado.testing.gen_test
+    def test_check_timeout(self):
         with mock.patch.object(checker, 'TIMEOUT', 1):
             response = yield checker.check_tcp("foo", self.unlistened_port, None, io_loop=self.io_loop, query_params="", headers={})
             self.assertEqual(response[0], 503)

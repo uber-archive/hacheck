@@ -1,6 +1,7 @@
 import datetime
 import socket
 import time
+import re
 
 import tornado.concurrent
 import tornado.ioloop
@@ -160,3 +161,55 @@ def check_mysql(service_name, port, query, io_loop, query_params, headers):
         raise tornado.gen.Return((500, 'MySQL sez %s' % response))
     yield conn.quit()
     raise tornado.gen.Return((200, 'MySQL connect response: %s' % response))
+
+@cache.cached
+@tornado.gen.coroutine
+def check_redis_sentinel(service_name, port, query, io_loop, query_params, headers):
+    stream = None
+    connect_start = time.time()
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
+    try:
+        stream = tornado.iostream.IOStream(s, io_loop=io_loop)
+        yield add_timeout_to_connect(
+            stream,
+            args=[('127.0.0.1', port)],
+            timeout_secs=TIMEOUT
+        )
+
+        if re.match(r'(3.)', tornado.version) is not None:
+            #Tornado V3"
+            redis_future = tornado.concurrent.Future()
+
+            def write_callback():
+                def read_callback(data):
+                    stream.close()
+                    if data.strip() != b'+PONG':
+                        redis_future.set_result((500, 'Sent PING, got back %s' % data))
+                    else:
+                        redis_future.set_result((200, 'Sent PING, got back +PONG'))
+
+                stream.read_until(b'\n', read_callback)
+            stream.write(b'PING\r\n', write_callback)
+
+            result = yield redis_future
+            raise tornado.gen.Return(result)
+
+        if re.match(r'(4.)', tornado.version) is not None:
+            #Tornado V4"
+            yield stream.write(b'PING\r\n')
+            data = yield stream.read_until(b'\n')
+            stream.close()
+            if data.strip() != b'+PONG':
+                raise tornado.gen.Return((500, 'Sent PING, got back %s' % data))
+            else:
+                raise tornado.gen.Return((200, 'Sent PING, got back +PONG'))
+
+    except Timeout:
+        raise tornado.gen.Return((
+            503,
+            'Connection timed out after %.2fs' % (time.time() - connect_start)
+        ))
+    raise tornado.gen.Return((
+        200,
+        'Connected in %.2fs' % (time.time() - connect_start)
+    ))
