@@ -39,6 +39,7 @@ def get_app():
         (r'/recent', handlers.ListRecentHandler),
         (r'/status/count', handlers.ServiceCountHandler),
         (r'/status', handlers.StatusHandler),
+        (r'/haproxy/([a-zA-Z0-9_-]+)/([0-9]+)/?(.*)', handlers.HaproxyServiceHandler),
     ], start_time=time.time(), log_function=log_request)
 
 
