@@ -36,11 +36,11 @@ def get_app():
         (r'/redis/([a-zA-Z0-9_-]+)/([0-9]+)/?(.*)', handlers.RedisSentinelServiceHandler),
         (r'/sentinel/([a-zA-Z0-9_-]+)/([0-9]+)/?(.*)', handlers.RedisSentinelServiceHandler),
         (r'/spool/([a-zA-Z0-9_-]+)/([0-9]+)/?(.*)', handlers.SpoolServiceHandler),
+        (r'/haproxy/([a-zA-Z0-9_-]+)/([0-9]+)/?(.*)', handlers.HaproxyServiceHandler),
         (r'/recent', handlers.ListRecentHandler),
         (r'/status/count', handlers.ServiceCountHandler),
         (r'/status', handlers.StatusHandler),
-        (r'/haproxy/([a-zA-Z0-9_-]+)/([0-9]+)/?(.*)', handlers.HaproxyServiceHandler),
-    ], start_time=time.time(), log_function=log_request)
+   ], start_time=time.time(), log_function=log_request)
 
 
 def setrlimit_nofile(soft_target):

@@ -133,7 +133,7 @@ def check_haproxy(service_name, port, check_path, io_loop, query_params, headers
         STATUS = 17
         service_present = False
         for row in csv.reader(body.split('\n')):
-            log.debug('row is %s', row)
+            log.info('row is %s', row)
             if len(row) < 18:
                 continue
             if row[PXNAME] == service_name and row[SVNAME] == 'BACKEND':
@@ -153,7 +153,7 @@ def check_haproxy(service_name, port, check_path, io_loop, query_params, headers
         reason = exc.response.body if exc.response else ""
     except Exception as e:
         code = 599
-        reason = 'Unhandled exception %s %s %s %s' % (e, row, service_name, port)
+        reason = 'Unhandled exception %s %s %s' % (e, service_name, port)
     raise tornado.gen.Return((code, reason))
 
 
