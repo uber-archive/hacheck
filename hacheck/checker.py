@@ -4,9 +4,6 @@ import socket
 import time
 import re
 
-import logging
-log = logging.getLogger()
-
 import tornado.concurrent
 import tornado.ioloop
 import tornado.iostream
@@ -133,7 +130,6 @@ def check_haproxy(service_name, port, check_path, io_loop, query_params, headers
         STATUS = 17
         service_present = False
         for row in csv.reader(body.split('\n')):
-            log.info('row is %s', row)
             if len(row) < 18:
                 continue
             if row[PXNAME] == service_name and row[SVNAME] == 'BACKEND':

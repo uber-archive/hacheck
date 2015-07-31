@@ -133,7 +133,7 @@ class TestHaproxyCheckerExceptionResponse(tornado.testing.AsyncHTTPTestCase):
     def test_badresponse(self):
         port = self.get_http_port()
         response = yield checker.check_haproxy("", self.get_http_port(), "/", io_loop=self.io_loop, query_params="", headers={})
-        self.assertEqual((599, b'Unhandled exception line contains NULL byte  %d' % port), response)
+        self.assertEqual(599, response[0])
 
 
 class TestHTTPChecker(tornado.testing.AsyncHTTPTestCase):
