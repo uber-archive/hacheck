@@ -132,7 +132,7 @@ class TestHaproxyCheckerExceptionResponse(tornado.testing.AsyncHTTPTestCase):
     @tornado.testing.gen_test
     def test_badresponse(self):
         port = self.get_http_port()
-        response = yield checker.check_haproxy("", self.get_http_port(), "/", io_loop=self.io_loop, query_params="", headers={})
+        response = yield checker.check_haproxy("", port, "/", io_loop=self.io_loop, query_params="", headers={})
         self.assertEqual(599, response[0])
 
 
@@ -185,8 +185,8 @@ class TestHTTPChecker(tornado.testing.AsyncHTTPTestCase):
 
 class TestServer(tornado.tcpserver.TCPServer):
     def __init__(self, io_loop, response='hello\n'):
-      self.response = response
-      super(TestServer, self).__init__(io_loop=io_loop)
+        self.response = response
+        super(TestServer, self).__init__(io_loop=io_loop)
 
     @tornado.gen.coroutine
     def handle_stream(self, stream, address):
@@ -224,6 +224,7 @@ class TestTCPChecker(tornado.testing.AsyncTestCase):
         with mock.patch.object(checker, 'TIMEOUT', 1):
             response = yield checker.check_tcp("foo", self.unlistened_port, None, io_loop=self.io_loop, query_params="", headers={})
             self.assertEqual(response[0], 503)
+
 
 class TestRedisSentinelChecker(tornado.testing.AsyncTestCase):
     def setUp(self):

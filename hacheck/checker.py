@@ -111,6 +111,7 @@ def check_http(service_name, port, check_path, io_loop, query_params, headers):
         reason = 'Unhandled exception %s' % e
     raise tornado.gen.Return((code, reason))
 
+
 @cache.cached
 @tornado.gen.coroutine
 def check_haproxy(service_name, port, check_path, io_loop, query_params, headers):
@@ -124,7 +125,7 @@ def check_haproxy(service_name, port, check_path, io_loop, query_params, headers
     try:
         response = yield http_client.fetch(request)
         code = response.code
-        body = response.body
+        body = response.body.decode('utf-8')
         PXNAME = 0
         SVNAME = 1
         STATUS = 17
@@ -151,7 +152,6 @@ def check_haproxy(service_name, port, check_path, io_loop, query_params, headers
         code = 599
         reason = 'Unhandled exception %s %s %s' % (e, service_name, port)
     raise tornado.gen.Return((code, reason))
-
 
 
 @cache.cached
@@ -205,6 +205,7 @@ def check_mysql(service_name, port, query, io_loop, query_params, headers):
     yield conn.quit()
     raise tornado.gen.Return((200, 'MySQL connect response: %s' % response))
 
+
 @cache.cached
 @tornado.gen.coroutine
 def check_redis_sentinel(service_name, port, query, io_loop, query_params, headers):
@@ -220,7 +221,7 @@ def check_redis_sentinel(service_name, port, query, io_loop, query_params, heade
         )
 
         if re.match(r'(3.)', tornado.version) is not None:
-            #Tornado V3"
+            # Tornado V3
             redis_future = tornado.concurrent.Future()
 
             def write_callback():
@@ -238,7 +239,7 @@ def check_redis_sentinel(service_name, port, query, io_loop, query_params, heade
             raise tornado.gen.Return(result)
 
         if re.match(r'(4.)', tornado.version) is not None:
-            #Tornado V4"
+            # Tornado V4
             yield stream.write(b'PING\r\n')
             data = yield stream.read_until(b'\n')
             stream.close()
