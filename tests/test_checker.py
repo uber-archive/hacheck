@@ -60,6 +60,82 @@ class TestChecker(TestCase):
             self.assertEqual(fut.result()[0], 503)
 
 
+class ValidHaproxyResponse(tornado.web.RequestHandler):
+    def get(self):
+        self.set_status(200)
+        self.write('''# pxname,svname,qcur,qmax,scur,smax,slim,stot,bin,bout,dreq,dresp,ereq,econ,eresp,wretr,wredis,status,weight,act,bck,chkfail,chkdown,lastchg,downtime,qlimit,pid,iid,sid,throttle,lbtot,tracked,type,rate,rate_lim,rate_max,check_status,check_code,check_duration,hrsp_1xx,hrsp_2xx,hrsp_3xx,hrsp_4xx,hrsp_5xx,hrsp_other,hanafail,req_rate,req_rate_max,req_tot,cli_abrt,srv_abrt,comp_in,comp_out,comp_byp,comp_rsp,lastsess,last_chk,last_agt,qtime,ctime,rtime,ttime,
+stats,FRONTEND,,,1,1,2000,48,4542,293789,0,0,0,,,,,OPEN,,,,,,,,,1,2,0,,,,0,1,0,1,,,,0,47,0,0,0,0,,1,1,48,,,0,0,0,0,,,,,,,,
+stats,BACKEND,0,0,0,0,200,0,4542,293789,0,0,,0,0,0,0,UP,0,0,0,,0,709871,0,,1,2,0,,0,,1,0,,0,,,,0,0,0,0,0,0,,,,,0,0,0,0,0,0,0,,,0,0,1,1,
+foofrontend,FRONTEND,,,0,0,2000,0,0,0,0,0,0,,,,,OPEN,,,,,,,,,1,4,0,,,,0,0,100,0,,,,0,0,0,0,0,0,,0,0,0,,,0,0,0,0,,,,,,,,
+server1,localhost,0,0,0,0,,0,0,0,,0,,0,0,0,0,DOWN,100,1,0,1,1,709871,709871,,1,5,1,,0,,2,0,,0,L4CON,,0,0,0,0,0,0,0,0,,,,0,0,,,,,-1,Connection refused,,0,0,0,0,
+downbackend,BACKEND,0,0,0,0,400,0,0,0,0,0,,0,0,0,0,DOWN,0,0,0,,1,709871,709871,,1,5,0,,0,,1,0,,0,,,,0,0,0,0,0,0,,,,,0,0,0,0,0,0,-1,,,0,0,0,0,
+upbackend,BACKEND,0,0,0,0,400,0,0,0,0,0,,0,0,0,0,UP,0,0,0,,1,259589,259589,,1,14,0,,0,,1,0,,0,,,,0,0,0,0,0,0,,,,,0,0,0,0,0,0,-1,,,0,0,0,0,
+postgres5503,FRONTEND,,,0,0,2000,0,0,0,0,0,0,,,,,OPEN,,,,,,,,,1,21,0,,,,0,0,0,0,,,,,,,,,,,0,0,0,,,0,0,0,0,,,,,,,,
+postgres-soa-slave,localhost,0,0,0,0,,0,0,0,,0,,0,0,0,0,DOWN,10,1,0,2,2,259401,259435,,1,22,1,,0,,2,0,,0,L4CON,,0,,,,,,,0,,,,0,0,,,,,-1,Connection refused,,0,0,0,0,
+postgres-soa-slave,BACKEND,0,0,0,0,200,0,0,0,0,0,,0,0,0,0,DOWN,0,0,0,,2,259401,259435,,1,22,0,,0,,1,0,,0,,,,,,,,,,,,,,0,0,0,0,0,0,-1,,,0,0,0,0,\n''')
+
+
+class InvalidHaproxyResponse(tornado.web.RequestHandler):
+    def get(self):
+        self.set_status(500)
+
+
+class ExceptionResponse(tornado.web.RequestHandler):
+    def get(self):
+        self.set_status(200)
+        self.write('\x00\x00')
+
+
+class TestHaproxyCheckerValidResponse(tornado.testing.AsyncHTTPTestCase):
+
+    def get_app(self):
+        return tornado.web.Application([
+            ('/;csv', ValidHaproxyResponse),
+        ])
+
+    @tornado.testing.gen_test
+    def test_downbackend(self):
+        response = yield checker.check_haproxy("downbackend", self.get_http_port(), "/", io_loop=self.io_loop, query_params="", headers={})
+        self.assertEqual((500, 'downbackend is DOWN'), response)
+
+    @tornado.testing.gen_test
+    def test_nonexistentbackend(self):
+        response = yield checker.check_haproxy("nonexistentbackend", self.get_http_port(), "/", io_loop=self.io_loop, query_params="", headers={})
+        self.assertEqual((500, 'nonexistentbackend is not found'), response)
+
+    @tornado.testing.gen_test
+    def test_upbackend(self):
+        response = yield checker.check_haproxy("upbackend", self.get_http_port(), "/", io_loop=self.io_loop, query_params="", headers={})
+        self.assertEqual((200, 'upbackend is UP'), response)
+
+
+class TestHaproxyCheckerInvalidResponse(tornado.testing.AsyncHTTPTestCase):
+
+    def get_app(self):
+        return tornado.web.Application([
+            ('/;csv', InvalidHaproxyResponse),
+        ])
+
+    @tornado.testing.gen_test
+    def test_invalidhttpresponse(self):
+        response = yield checker.check_haproxy("", self.get_http_port(), "/", io_loop=self.io_loop, query_params="", headers={})
+        self.assertEqual((500, b''), response)
+
+
+class TestHaproxyCheckerExceptionResponse(tornado.testing.AsyncHTTPTestCase):
+
+    def get_app(self):
+        return tornado.web.Application([
+            ('/;csv', ExceptionResponse),
+        ])
+
+    @tornado.testing.gen_test
+    def test_badresponse(self):
+        port = self.get_http_port()
+        response = yield checker.check_haproxy("", port, "/", io_loop=self.io_loop, query_params="", headers={})
+        self.assertEqual(599, response[0])
+
+
 class TestHTTPChecker(tornado.testing.AsyncHTTPTestCase):
 
     def get_app(self):
@@ -109,8 +185,8 @@ class TestHTTPChecker(tornado.testing.AsyncHTTPTestCase):
 
 class TestServer(tornado.tcpserver.TCPServer):
     def __init__(self, io_loop, response='hello\n'):
-      self.response = response
-      super(TestServer, self).__init__(io_loop=io_loop)
+        self.response = response
+        super(TestServer, self).__init__(io_loop=io_loop)
 
     @tornado.gen.coroutine
     def handle_stream(self, stream, address):
@@ -148,6 +224,7 @@ class TestTCPChecker(tornado.testing.AsyncTestCase):
         with mock.patch.object(checker, 'TIMEOUT', 1):
             response = yield checker.check_tcp("foo", self.unlistened_port, None, io_loop=self.io_loop, query_params="", headers={})
             self.assertEqual(response[0], 503)
+
 
 class TestRedisSentinelChecker(tornado.testing.AsyncTestCase):
     def setUp(self):

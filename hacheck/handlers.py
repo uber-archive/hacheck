@@ -110,6 +110,10 @@ class HTTPServiceHandler(BaseServiceHandler):
     CHECKERS = [checker.check_spool, checker.check_http]
 
 
+class HaproxyServiceHandler(BaseServiceHandler):
+    CHECKERS = [checker.check_spool, checker.check_haproxy]
+
+
 class TCPServiceHandler(BaseServiceHandler):
     CHECKERS = [checker.check_spool, checker.check_tcp]
 

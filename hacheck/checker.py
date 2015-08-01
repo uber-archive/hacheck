@@ -1,3 +1,4 @@
+import csv
 import datetime
 import socket
 import time
@@ -113,6 +114,48 @@ def check_http(service_name, port, check_path, io_loop, query_params, headers):
 
 @cache.cached
 @tornado.gen.coroutine
+def check_haproxy(service_name, port, check_path, io_loop, query_params, headers):
+    path = 'http://127.0.0.1:%d/;csv' % (port,)
+    request = tornado.httpclient.HTTPRequest(
+        path,
+        method='GET',
+        request_timeout=TIMEOUT
+    )
+    http_client = tornado.httpclient.AsyncHTTPClient(io_loop=io_loop)
+    try:
+        response = yield http_client.fetch(request)
+        code = response.code
+        body = response.body.decode('utf-8')
+        PXNAME = 0
+        SVNAME = 1
+        STATUS = 17
+        service_present = False
+        for row in csv.reader(body.split('\n')):
+            if len(row) < 18:
+                continue
+            if row[PXNAME] == service_name and row[SVNAME] == 'BACKEND':
+                if row[STATUS] == 'UP':
+                    code = 200
+                    reason = '%s is UP' % service_name
+                else:
+                    code = 500
+                    reason = '%s is %s' % (service_name, row[STATUS])
+                service_present = True
+                break
+        if not service_present:
+            code = 500
+            reason = '%s is not found' % service_name
+    except tornado.httpclient.HTTPError as exc:
+        code = exc.code
+        reason = exc.response.body if exc.response else ""
+    except Exception as e:
+        code = 599
+        reason = 'Unhandled exception %s %s %s' % (e, service_name, port)
+    raise tornado.gen.Return((code, reason))
+
+
+@cache.cached
+@tornado.gen.coroutine
 def check_tcp(service_name, port, query, io_loop, query_params, headers):
     stream = None
     connect_start = time.time()
@@ -162,6 +205,7 @@ def check_mysql(service_name, port, query, io_loop, query_params, headers):
     yield conn.quit()
     raise tornado.gen.Return((200, 'MySQL connect response: %s' % response))
 
+
 @cache.cached
 @tornado.gen.coroutine
 def check_redis_sentinel(service_name, port, query, io_loop, query_params, headers):
@@ -177,7 +221,7 @@ def check_redis_sentinel(service_name, port, query, io_loop, query_params, heade
         )
 
         if re.match(r'(3.)', tornado.version) is not None:
-            #Tornado V3"
+            # Tornado V3
             redis_future = tornado.concurrent.Future()
 
             def write_callback():
@@ -195,7 +239,7 @@ def check_redis_sentinel(service_name, port, query, io_loop, query_params, heade
             raise tornado.gen.Return(result)
 
         if re.match(r'(4.)', tornado.version) is not None:
-            #Tornado V4"
+            # Tornado V4
             yield stream.write(b'PING\r\n')
             data = yield stream.read_until(b'\n')
             stream.close()
