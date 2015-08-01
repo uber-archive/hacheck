@@ -96,17 +96,17 @@ class TestHaproxyCheckerValidResponse(tornado.testing.AsyncHTTPTestCase):
     @tornado.testing.gen_test
     def test_downbackend(self):
         response = yield checker.check_haproxy("downbackend", self.get_http_port(), "/", io_loop=self.io_loop, query_params="", headers={})
-        self.assertEqual((500, b'downbackend is DOWN'), response)
+        self.assertEqual((500, 'downbackend is DOWN'), response)
 
     @tornado.testing.gen_test
     def test_nonexistentbackend(self):
         response = yield checker.check_haproxy("nonexistentbackend", self.get_http_port(), "/", io_loop=self.io_loop, query_params="", headers={})
-        self.assertEqual((500, b'nonexistentbackend is not found'), response)
+        self.assertEqual((500, 'nonexistentbackend is not found'), response)
 
     @tornado.testing.gen_test
     def test_upbackend(self):
         response = yield checker.check_haproxy("upbackend", self.get_http_port(), "/", io_loop=self.io_loop, query_params="", headers={})
-        self.assertEqual((200, b'upbackend is UP'), response)
+        self.assertEqual((200, 'upbackend is UP'), response)
 
 
 class TestHaproxyCheckerInvalidResponse(tornado.testing.AsyncHTTPTestCase):
