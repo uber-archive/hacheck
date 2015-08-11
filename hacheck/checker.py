@@ -304,7 +304,7 @@ def check_sentinel_info(service_name, port, query, io_loop, query_params, header
             def write_callback():
                 def read_callback(data):
                     for line in data.split('\n'):
-                        ipport = re.findall(r'\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}:\d{1,5}', line)
+                        ipport = re.findall(b'\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}:\d{1,5}', line)
                         if ipport:
                             try:
                                  k="redis_master"
@@ -334,7 +334,7 @@ def check_sentinel_info(service_name, port, query, io_loop, query_params, header
             yield stream.write(b'INFO\r\n')
             data = yield stream.read_until(b'sentinels')
             for line in data.split('\n'):
-                ipport = re.findall(r'\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}:\d{1,5}', line)
+                ipport = re.findall(b'\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}:\d{1,5}', line)
                 if ipport:
                     try:
                         k="redis_master"
