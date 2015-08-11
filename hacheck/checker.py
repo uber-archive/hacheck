@@ -236,7 +236,7 @@ def check_redis_info(service_name, port, query, io_loop, query_params, headers):
 
             def write_callback():
                 def read_callback(data):
-                    for line in data.split('\n'):
+                    for line in data.decode('utf-8').split('\n'):
                         if ':' in line:
                             try:
                                 k,v = line.strip().split(':')
@@ -260,7 +260,7 @@ def check_redis_info(service_name, port, query, io_loop, query_params, headers):
             #Tornado V4"
             yield stream.write(b'INFO\r\n')
             data = yield stream.read_until(b'Keyspace')
-            for line in data.split('\n'):
+            for line in data.decode('utf-8').split('\n'):
                 if ':' in line:
                     try:
                         k,v = line.strip().split(':')
@@ -303,8 +303,8 @@ def check_sentinel_info(service_name, port, query, io_loop, query_params, header
 
             def write_callback():
                 def read_callback(data):
-                    for line in data.split('\n'):
-                        ipport = re.findall(b'\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}:\d{1,5}', line)
+                    for line in data.decode('utf-8').split('\n'):
+                        ipport = re.findall(r'\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}:\d{1,5}', line)
                         if ipport:
                             try:
                                  k="redis_master"
@@ -333,8 +333,8 @@ def check_sentinel_info(service_name, port, query, io_loop, query_params, header
             #Tornado V4"
             yield stream.write(b'INFO\r\n')
             data = yield stream.read_until(b'sentinels')
-            for line in data.split('\n'):
-                ipport = re.findall(b'\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}:\d{1,5}', line)
+            for line in data.decode('utf-8').split('\n'):
+                ipport = re.findall(r'\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}:\d{1,5}', line)
                 if ipport:
                     try:
                         k="redis_master"
