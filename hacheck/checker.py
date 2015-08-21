@@ -231,7 +231,7 @@ def check_redis_info(service_name, port, query, io_loop, query_params, headers):
         )
 
         if re.match(r'(3.)', tornado.version) is not None:
-            #Tornado V3"
+            #Tornado V3
             redis_future = tornado.concurrent.Future()
 
             def write_callback():
@@ -257,7 +257,7 @@ def check_redis_info(service_name, port, query, io_loop, query_params, headers):
 
 
         if re.match(r'(4.)', tornado.version) is not None:
-            #Tornado V4"
+            #Tornado V4
             yield stream.write(b'INFO\r\n')
             data = yield stream.read_until(b'Keyspace')
             for line in data.decode('utf-8').split('\n'):
@@ -267,6 +267,7 @@ def check_redis_info(service_name, port, query, io_loop, query_params, headers):
                         info[k] = v
                     except ValueError:
                         continue
+            stream.close()
             if info['redis_version'] == None:
                 raise tornado.gen.Return((500, 'Sent INFO, got back %s' % data))
             else:
@@ -298,7 +299,7 @@ def check_sentinel_info(service_name, port, query, io_loop, query_params, header
         )
 
         if re.match(r'(3.)', tornado.version) is not None:
-            #Tornado V3"
+            #Tornado V3
             redis_future = tornado.concurrent.Future()
 
             def write_callback():
@@ -330,7 +331,7 @@ def check_sentinel_info(service_name, port, query, io_loop, query_params, header
             raise tornado.gen.Return(result)
 
         if re.match(r'(4.)', tornado.version) is not None:
-            #Tornado V4"
+            #Tornado V4
             yield stream.write(b'INFO\r\n')
             data = yield stream.read_until(b'sentinels')
             for line in data.decode('utf-8').split('\n'):
@@ -348,6 +349,7 @@ def check_sentinel_info(service_name, port, query, io_loop, query_params, header
                         info[k] = v
                     except ValueError:
                         continue
+            stream.close()
             if info['redis_version'] == None:
                 raise tornado.gen.Return((500, 'Sent INFO, got back %s' % data))
             else:
