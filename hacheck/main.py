@@ -3,6 +3,7 @@ import optparse
 import signal
 import time
 import sys
+import socket
 import resource
 
 import tornado.ioloop
@@ -42,7 +43,7 @@ def get_app():
         (r'/recent', handlers.ListRecentHandler),
         (r'/status/count', handlers.ServiceCountHandler),
         (r'/status', handlers.StatusHandler),
-   ], start_time=time.time(), log_function=log_request)
+    ], start_time=time.time(), log_function=log_request)
 
 
 def setrlimit_nofile(soft_target):
@@ -105,6 +106,33 @@ def main():
         handler = logging.StreamHandler(sys.stdout)
     elif log_path == 'stderr':
         handler = logging.StreamHandler(sys.stderr)
+    elif log_path.startswith('syslog'):
+        import syslog
+        if log_path == 'syslog':
+            address = '/dev/log'
+        else:
+            syslog_address_parts = log_path.split(',')
+            if len(syslog_address_parts) == 3:
+                _, syslog_address, socktype = syslog_address_parts
+                socktypes = {
+                    'stream': socket.SOCK_STREAM,
+                    'dgram': socket.SOCK_DGRAM
+                }
+                if socktype not in socktypes:
+                    raise ValueError('Unrecognized socket type {0}'.format(socktype))
+                socktype = socktypes[socktype]
+            elif len(syslog_address_parts) == 2:
+                _, syslog_address = syslog_address_parts
+                socktype = socket.SOCK_DGRAM
+            else:
+                raise ValueError('Unrecognized syslog address format {0}'.format(log_path))
+            if ':' in syslog_address:
+                host, port = syslog_address.split(':')
+                port = int(port)
+                address = (host, port)
+            else:
+                address = syslog_address
+        handler = logging.handlers.SysLogHandler(address, facility=syslog.LOG_DAEMON, socktype=socktype)
     else:
         handler = logging.handlers.WatchedFileHandler(log_path)
     fmt = logging.Formatter(logging.BASIC_FORMAT, None)

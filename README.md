@@ -31,12 +31,15 @@ Imagine you want to take down the server `web01` for maintenance. Just SSH to it
 ### Configuration
 
 `hacheck` accepts a `-c` flag which should point to a YAML-formatted configuration file. Some notable properties of this file:
-* `cache_time`: The duration for which check results may be cached
-* `service_name_header`: If set, the name of a header which will be populated with the service name on HTTP checks
-* `log_path`: Either the string `"stdout"`, the string `"stderr"`, or a fully-qualified path to a file to write logs to. Uses a [WatchedFileHandler](http://docs.python.org/2/library/logging.handlers.html#watchedfilehandler) and ought to play nicely with logrotate
-* `mysql_username`: username to use when logging into mysql for checks
-* `mysql_password`: password to use when logging into mysql for checks
-* `rlimit_nofile`: set the NOFILE rlimit. If the string "max", will set the rlimit to the hard rlimit; otherwise, will be interpreted as an integer and set to that value.
+
+  * `cache_time`: The duration for which check results may be cached
+  * `service_name_header`: If set, the name of a header which will be populated with the service name on HTTP checks
+  * `log_path`: Either the string `"stdout"`, the string `"stderr"`, the string "syslog", or a fully-qualified path to a file to write logs to.
+    * If passed `syslog`, will write datagram messages to `/dev/log`. Can be passed `syslog,address,socktype` to write to other kinds of syslog. For example, `syslog,127.0.0.1:514,dgram` will write UDP to localhost:514; `syslog,/dev/log_stream,stream` will write stream (TCP) to `/dev/log`
+    * Files use a [WatchedFileHandler](http://docs.python.org/2/library/logging.handlers.html#watchedfilehandler) and ought to play nicely with logrotate
+  * `mysql_username`: username to use when logging into mysql for checks
+  * `mysql_password`: password to use when logging into mysql for checks
+  * `rlimit_nofile`: set the NOFILE rlimit. If the string "max", will set the rlimit to the hard rlimit; otherwise, will be interpreted as an integer and set to that value.
 
 ### Monitoring
 
