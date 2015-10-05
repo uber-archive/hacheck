@@ -78,7 +78,7 @@ class TestCallable(TestCase):
                 mock_urlopen.return_value.read.return_value = json.dumps({
                     "seen_services": ["foo"],
                     "threshold_seconds": 10,
-                })
+                }).encode('utf-8')
                 self.assertEqual(hacheck.haupdown.halist(), 0)
                 mock_urlopen.assert_called_once_with('http://127.0.0.1:3333/recent', timeout=mock.ANY)
                 mock_print.assert_called_once_with("foo")
