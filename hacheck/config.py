@@ -2,6 +2,8 @@ import yaml
 import os
 import re
 
+import six
+
 
 def max_or_int(some_str_value):
     if some_str_value == 'max':
@@ -26,7 +28,7 @@ for key, (_, default) in DEFAULTS.items():
 
 
 def expand_shell_variables(key, value):
-    if not isinstance(value, basestring):
+    if not isinstance(value, six.string_types):
         return value
 
     def get_env(vmd):
