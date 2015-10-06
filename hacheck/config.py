@@ -26,6 +26,9 @@ for key, (_, default) in DEFAULTS.items():
 
 
 def expand_shell_variables(key, value):
+    if not isinstance(value, basestring):
+        return value
+
     def get_env(vmd):
         variable = vmd.group(1)
         if variable in os.environ:
