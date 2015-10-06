@@ -103,7 +103,7 @@ def main(default_action='list'):
 
     if opts.action == 'list':
         with contextlib.closing(urlopen(
-            'http://127.0.0.1:%d/recent' % opts.port,
+            'http://127.0.0.1:{0:d}/recent'.format(opts.port),
             timeout=3
         )) as f:
             reader = codecs.getreader('utf-8')
