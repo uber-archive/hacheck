@@ -108,6 +108,7 @@ def main():
         handler = logging.StreamHandler(sys.stderr)
     elif log_path.startswith('syslog'):
         import syslog
+        socktype = socket.SOCK_DGRAM
         if log_path == 'syslog':
             address = '/dev/log'
         else:
@@ -123,7 +124,6 @@ def main():
                 socktype = socktypes[socktype]
             elif len(syslog_address_parts) == 2:
                 _, syslog_address = syslog_address_parts
-                socktype = socket.SOCK_DGRAM
             else:
                 raise ValueError('Unrecognized syslog address format {0}'.format(log_path))
             if ':' in syslog_address:
