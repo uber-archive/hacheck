@@ -1,4 +1,6 @@
 import yaml
+import os
+import re
 
 
 def max_or_int(some_str_value):
@@ -23,11 +25,22 @@ for key, (_, default) in DEFAULTS.items():
     config[key] = default
 
 
+def expand_shell_variables(key, value):
+    def get_env(vmd):
+        variable = vmd.group(1)
+        if variable in os.environ:
+            return os.environ[variable]
+        else:
+            raise KeyError('${0} not in environment (from config {1}={2})'.format(variable, key, value))
+
+    return re.sub(r'\$\{([^}]+)\}', get_env, value)
+
+
 def load_from(path):
     with open(path, 'r') as f:
         c = yaml.safe_load(f)
         for key, value in c.items():
             if key in DEFAULTS:
                 constructor, default = DEFAULTS[key]
-                config[key] = constructor(value)
+                config[key] = constructor(expand_shell_variables(key, value))
     return config
