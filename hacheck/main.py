@@ -10,6 +10,7 @@ import tornado.httpserver
 import tornado.web
 from tornado.log import access_log
 
+from . import agent_server
 from . import cache
 from . import config
 from . import handlers
@@ -42,7 +43,7 @@ def get_app():
         (r'/recent', handlers.ListRecentHandler),
         (r'/status/count', handlers.ServiceCountHandler),
         (r'/status', handlers.StatusHandler),
-   ], start_time=time.time(), log_function=log_request)
+    ], start_time=time.time(), log_function=log_request)
 
 
 def setrlimit_nofile(soft_target):
@@ -71,6 +72,15 @@ def main():
         type=int,
         action='append',
         help='Port to listen on. May be repeated. If not passed, defaults to :3333.'
+    )
+    parser.add_option(
+        '-A',
+        '--agent-port',
+        default=[],
+        type=int,
+        action='append',
+        help=('Port to listen on for agent checks. May be repeated. '
+              'If not passed, an agent listener will not be started. May be repeated.')
     )
     parser.add_option(
         '-B',
@@ -118,6 +128,11 @@ def main():
     application = get_app()
     ioloop = tornado.ioloop.IOLoop.instance()
     server = tornado.httpserver.HTTPServer(application, io_loop=ioloop)
+
+    if opts.agent_port:
+        a_s = agent_server.AgentServer(io_loop=ioloop)
+        for port in opts.agent_port:
+            a_s.listen(port, opts.bind_address)
 
     if initialize_mutornadomon is not None:
         mutornadomon_collector = initialize_mutornadomon(application, io_loop=ioloop)
