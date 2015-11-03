@@ -42,7 +42,7 @@ def get_app():
         (r'/recent', handlers.ListRecentHandler),
         (r'/status/count', handlers.ServiceCountHandler),
         (r'/status', handlers.StatusHandler),
-   ], start_time=time.time(), log_function=log_request)
+    ], start_time=time.time(), log_function=log_request)
 
 
 def setrlimit_nofile(soft_target):

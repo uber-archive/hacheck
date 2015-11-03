@@ -259,12 +259,13 @@ def check_redis_sentinel(service_name, port, query, io_loop, query_params, heade
         'Connected in %.2fs' % (time.time() - connect_start)
     ))
 
+
 @cache.cached
 @tornado.gen.coroutine
 def check_redis_info(service_name, port, query, io_loop, query_params, headers):
     stream = None
     connect_start = time.time()
-    info={}
+    info = {}
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
     try:
         stream = tornado.iostream.IOStream(s, io_loop=io_loop)
@@ -274,8 +275,8 @@ def check_redis_info(service_name, port, query, io_loop, query_params, headers):
             timeout_secs=TIMEOUT
         )
 
-        if re.match(r'(3.)', tornado.version) is not None:
-            #Tornado V3
+        if tornado.version_info < (4, 0):
+            # Tornado V3
             redis_future = tornado.concurrent.Future()
 
             def write_callback():
@@ -283,12 +284,12 @@ def check_redis_info(service_name, port, query, io_loop, query_params, headers):
                     for line in data.decode('utf-8').split('\n'):
                         if ':' in line:
                             try:
-                                k,v = line.strip().split(':')
+                                k, v = line.strip().split(':')
                                 info[k] = v
                             except ValueError:
                                 continue
                     stream.close()
-                    if info['redis_version'] == None:
+                    if info['redis_version'] is None:
                         raise tornado.gen.Return((500, 'Sent INFO, got back %s' % data))
                     else:
                         raise tornado.gen.Return((200, json.dumps(info)))
@@ -298,21 +299,19 @@ def check_redis_info(service_name, port, query, io_loop, query_params, headers):
 
             result = yield redis_future
             raise tornado.gen.Return(result)
-
-
-        if re.match(r'(4.)', tornado.version) is not None:
-            #Tornado V4
+        elif tornado.version_info > (4, 0):
+            # Tornado V4
             yield stream.write(b'INFO\r\n')
             data = yield stream.read_until(b'Keyspace')
             for line in data.decode('utf-8').split('\n'):
                 if ':' in line:
                     try:
-                        k,v = line.strip().split(':')
+                        k, v = line.strip().split(':')
                         info[k] = v
                     except ValueError:
                         continue
             stream.close()
-            if info['redis_version'] == None:
+            if info['redis_version'] is None:
                 raise tornado.gen.Return((500, 'Sent INFO, got back %s' % data))
             else:
                 raise tornado.gen.Return((200, json.dumps(info)))
@@ -327,12 +326,13 @@ def check_redis_info(service_name, port, query, io_loop, query_params, headers):
         'Connected in %.2fs' % (time.time() - connect_start)
     ))
 
+
 @cache.cached
 @tornado.gen.coroutine
 def check_sentinel_info(service_name, port, query, io_loop, query_params, headers):
     stream = None
     connect_start = time.time()
-    info={}
+    info = {}
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
     try:
         stream = tornado.iostream.IOStream(s, io_loop=io_loop)
@@ -342,8 +342,8 @@ def check_sentinel_info(service_name, port, query, io_loop, query_params, header
             timeout_secs=TIMEOUT
         )
 
-        if re.match(r'(3.)', tornado.version) is not None:
-            #Tornado V3
+        if tornado.version_info < (4, 0):
+            # Tornado V3
             redis_future = tornado.concurrent.Future()
 
             def write_callback():
@@ -352,19 +352,19 @@ def check_sentinel_info(service_name, port, query, io_loop, query_params, header
                         ipport = re.findall(r'\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}:\d{1,5}', line)
                         if ipport:
                             try:
-                                 k="redis_master"
-                                 v=ipport
-                                 info[k]=v
+                                k = "redis_master"
+                                v = ipport
+                                info[k] = v
                             except ValueError:
                                 continue
                         if ':' in line:
                             try:
-                                k,v = line.strip().split(':')
+                                k, v = line.strip().split(':')
                                 info[k] = v
                             except ValueError:
                                 continue
                     stream.close()
-                    if info['redis_version'] == None:
+                    if info['redis_version'] is None:
                         raise tornado.gen.Return((500, 'Sent INFO, got back %s' % data))
                     else:
                         raise tornado.gen.Return((200, json.dumps(info)))
@@ -374,27 +374,27 @@ def check_sentinel_info(service_name, port, query, io_loop, query_params, header
             result = yield redis_future
             raise tornado.gen.Return(result)
 
-        if re.match(r'(4.)', tornado.version) is not None:
-            #Tornado V4
+        elif tornado.version_info > (4, 0):
+            # Tornado V4
             yield stream.write(b'INFO\r\n')
             data = yield stream.read_until(b'sentinels')
             for line in data.decode('utf-8').split('\n'):
                 ipport = re.findall(r'\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}:\d{1,5}', line)
                 if ipport:
                     try:
-                        k="redis_master"
-                        v=ipport
-                        info[k]=v
+                        k = "redis_master"
+                        v = ipport
+                        info[k] = v
                     except ValueError:
                         continue
                 if ':' in line:
                     try:
-                        k,v = line.strip().split(':')
+                        k, v = line.strip().split(':')
                         info[k] = v
                     except ValueError:
                         continue
             stream.close()
-            if info['redis_version'] == None:
+            if info['redis_version'] is None:
                 raise tornado.gen.Return((500, 'Sent INFO, got back %s' % data))
             else:
                 raise tornado.gen.Return((200, json.dumps(info)))

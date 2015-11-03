@@ -19,6 +19,8 @@ install:
 branches:
     only:
         - master
-script: "nosetests"
+script: 
+    - flake8 hacheck
+    - nosetests
 matrix:
     fast_finish: true
