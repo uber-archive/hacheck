@@ -86,7 +86,7 @@ def check_http(service_name, port, check_path, io_loop, query_params, headers):
     qp = query_params
     if not check_path.startswith("/"):
         check_path = "/" + check_path  # pragma: no cover
-    headers_out = {'User-Agent': 'hastate %s' % (__version__)}
+    headers_out = {'User-Agent': 'hacheck %s' % (__version__)}
     for header in HTTP_HEADERS_TO_COPY:
         if header in headers:
             headers_out[header] = headers[header]
