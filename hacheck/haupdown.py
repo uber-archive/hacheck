@@ -68,7 +68,7 @@ def main(default_action='list'):
         '--port',
         type=str,
         default=3333,
-        help='Port that the hacheck daemon is running on (default %(default)'
+        help='Port that the hacheck daemon is running on (default %(default)s)'
     )
     opts, args = parser.parse_args()
 

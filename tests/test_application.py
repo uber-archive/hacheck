@@ -86,8 +86,8 @@ class ApplicationTestCase(tornado.testing.AsyncHTTPTestCase):
         rv1.set_result((200, b'OK1'))
         rv2 = tornado.concurrent.Future()
         rv2.set_result((200, b'OK2'))
-        checker1 = mock.Mock(return_value=rv1)
-        checker2 = mock.Mock(return_value=rv2)
+        checker1 = mock.Mock(return_value=rv1, __name__='checker1')
+        checker2 = mock.Mock(return_value=rv2, __name__='checker2')
         with mock.patch.object(handlers.SpoolServiceHandler, 'CHECKERS', [checker1, checker2]):
             response = self.fetch('/spool/foo/1/status')
             self.assertEqual(200, response.code)
@@ -116,8 +116,8 @@ class ApplicationTestCase(tornado.testing.AsyncHTTPTestCase):
         rv1.set_result((404, b'NOK1'))
         rv2 = tornado.concurrent.Future()
         rv2.set_result((200, b'OK2'))
-        checker1 = mock.Mock(return_value=rv1)
-        checker2 = mock.Mock(return_value=rv2)
+        checker1 = mock.Mock(return_value=rv1, __name__='checker1')
+        checker2 = mock.Mock(return_value=rv2, __name__='checker2')
         with mock.patch.object(handlers.SpoolServiceHandler, 'CHECKERS', [checker1, checker2]):
             response = self.fetch('/spool/foo/2/status')
             self.assertEqual(404, response.code)
@@ -128,8 +128,8 @@ class ApplicationTestCase(tornado.testing.AsyncHTTPTestCase):
         rv1.set_result((200, b'OK1'))
         rv2 = tornado.concurrent.Future()
         rv2.set_result((404, b'NOK2'))
-        checker1 = mock.Mock(return_value=rv1)
-        checker2 = mock.Mock(return_value=rv2)
+        checker1 = mock.Mock(return_value=rv1, __name__='checker1')
+        checker2 = mock.Mock(return_value=rv2, __name__='checker2')
         with mock.patch.object(handlers.SpoolServiceHandler, 'CHECKERS', [checker1, checker2]):
             response = self.fetch('/spool/foo/2/status')
             self.assertEqual(404, response.code)
@@ -139,14 +139,17 @@ class ApplicationTestCase(tornado.testing.AsyncHTTPTestCase):
         # test that unusual HTTP codes are rewritten to 503s
         rv = tornado.concurrent.Future()
         rv.set_result((6000, 'this code is weird'))
-        checker = mock.Mock(return_value=rv)
+        checker = mock.Mock(return_value=rv, __name__='mock_checker')
         with mock.patch.object(handlers.HTTPServiceHandler, 'CHECKERS', [checker]):
             response = self.fetch('/http/uncached-weird-code/80/status')
             self.assertEqual(503, response.code)
 
     def test_option_parsing(self):
         with nested(
-            mock.patch('sys.argv', ['ignorethis', '-c', self.config_file.name, '--spool-root', 'foo']),
+            mock.patch(
+                'sys.argv',
+                ['ignorethis', '-c', self.config_file.name, '--spool-root', 'foo', '-B', '127.0.0.1']
+            ),
             mock.patch.object(tornado.ioloop.IOLoop, 'instance'),
             mock.patch.object(cache, 'configure'),
             mock.patch.object(main, 'get_app'),
@@ -165,7 +168,9 @@ class ApplicationTestCase(tornado.testing.AsyncHTTPTestCase):
         self.assertEqual(
             b,
             {
-                'seen_services': [['foo', {'code': 200, 'ts': mock.ANY, 'remote_ip': '127.0.0.1'}]],
+                'seen_services': [['foo', {
+                    'code': 200, 'ts': mock.ANY, 'remote_ip': '127.0.0.1', 'failed_checker': None,
+                }]],
                 'threshold_seconds': 600
             })
         response = self.fetch('/recent?threshold=20')
@@ -173,6 +178,23 @@ class ApplicationTestCase(tornado.testing.AsyncHTTPTestCase):
         self.assertEqual(
             b,
             {
-                'seen_services': [['foo', {'code': 200, 'ts': mock.ANY, 'remote_ip': '127.0.0.1'}]],
+                'seen_services': [[
+                    'foo', {
+                        'code': 200, 'ts': mock.ANY, 'remote_ip': '127.0.0.1', 'failed_checker': None,
+                    }]],
                 'threshold_seconds': 20
             })
+        # now mark it as down
+        with mock.patch.object(spool, 'is_up', return_value=(False, {"service": "any", "reason": ""})):
+            response = self.fetch('/spool/foo/1/status')
+            response = self.fetch('/recent?threshold=20')
+            b = json.loads(response.body.decode('utf-8'))
+            self.assertEqual(
+                b,
+                {
+                    'seen_services': [[
+                        'foo', {
+                            'code': 503, 'ts': mock.ANY, 'remote_ip': '127.0.0.1', 'failed_checker': 'check_spool',
+                        }]],
+                    'threshold_seconds': 20
+                })
