@@ -37,6 +37,7 @@ def get_app():
         (r'/redis-info/([a-zA-Z0-9_-]+)/([0-9]+)/?(.*)', handlers.RedisInfoServiceHandler),
         (r'/sentinel/([a-zA-Z0-9_-]+)/([0-9]+)/?(.*)', handlers.RedisSentinelServiceHandler),
         (r'/sentinel-info/([a-zA-Z0-9_-]+)/([0-9]+)/?(.*)', handlers.SentinelInfoServiceHandler),
+        (r'/zookeeper/([a-zA-Z0-9_-]+)/([0-9]+)/?(.*)', handlers.ZookeeperRUOKServiceHandler),
         (r'/spool/([a-zA-Z0-9_-]+)/([0-9]+)/?(.*)', handlers.SpoolServiceHandler),
         (r'/haproxy/([a-zA-Z0-9_-]+)/([0-9]+)/?(.*)', handlers.HaproxyServiceHandler),
         (r'/recent', handlers.ListRecentHandler),

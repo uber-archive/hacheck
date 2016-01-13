@@ -132,3 +132,7 @@ class RedisInfoServiceHandler(BaseServiceHandler):
 
 class SentinelInfoServiceHandler(BaseServiceHandler):
     CHECKERS = [checker.check_spool, checker.check_sentinel_info]
+
+
+class ZookeeperRUOKServiceHandler(BaseServiceHandler):
+    CHECKERS = [checker.check_spool, checker.check_zookeeper_ruok]
