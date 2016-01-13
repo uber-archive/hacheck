@@ -184,12 +184,15 @@ class TestHTTPChecker(tornado.testing.AsyncHTTPTestCase):
 
 
 class TestServer(tornado.tcpserver.TCPServer):
-    def __init__(self, io_loop, response='hello\n'):
+    def __init__(self, io_loop, response='hello\n', read_line_first=False):
         self.response = response
+        self.read_line_first = read_line_first
         super(TestServer, self).__init__(io_loop=io_loop)
 
     @tornado.gen.coroutine
     def handle_stream(self, stream, address):
+        if self.read_line_first:
+            yield stream.read_until(b'\n')
         yield stream.write(self.response)
         stream.close()
 
@@ -264,6 +267,7 @@ class TestRedisSentinelChecker(tornado.testing.AsyncTestCase):
             response = yield checker.check_tcp("foo", self.unlistened_port, None, io_loop=self.io_loop, query_params="", headers={})
             self.assertEqual(response[0], 503)
 
+
 class TestRedisInfoChecker(tornado.testing.AsyncTestCase):
     def setUp(self):
         super(TestRedisInfoChecker, self).setUp()
@@ -328,3 +332,33 @@ class TestSentinelInfoChecker(tornado.testing.AsyncTestCase):
         with mock.patch.object(checker, 'TIMEOUT', 1):
             response = yield checker.check_tcp("foo", self.unlistened_port, None, io_loop=self.io_loop, query_params="", headers={})
             self.assertEqual(response[0], 503)
+
+
+class TestZookeeperChecker(tornado.testing.AsyncTestCase):
+    def setUp(self):
+        super(TestZookeeperChecker, self).setUp()
+        socket, port = tornado.testing.bind_unused_port()
+        self.server = TestServer(io_loop=self.io_loop, read_line_first=True)
+        self.server.add_socket(socket)
+        self.socket = socket
+        self.port = port
+
+    def tearDown(self):
+        super(TestZookeeperChecker, self).tearDown()
+        try:
+            self.server.stop()
+            self.socket.close()
+        except Exception:
+            pass
+
+    @tornado.testing.gen_test
+    def test_imok(self):
+        with mock.patch.object(self.server, 'response', b'imok'):
+            response = yield checker.check_zookeeper_ruok("foo", self.port, None, io_loop=self.io_loop, query_params="", headers={})
+            self.assertEqual(200, response[0])
+
+    @tornado.testing.gen_test
+    def test_failure(self):
+        with mock.patch.object(self.server, 'response', b'imbad'):
+            response = yield checker.check_zookeeper_ruok("foo", self.port, None, io_loop=self.io_loop, query_params="", headers={})
+            self.assertEqual(500, response[0])
