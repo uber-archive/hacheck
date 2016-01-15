@@ -107,7 +107,6 @@ def main():
     elif log_path == 'stderr':
         handler = logging.StreamHandler(sys.stderr)
     elif log_path.startswith('syslog'):
-        import syslog
         socktype = socket.SOCK_DGRAM
         if log_path == 'syslog':
             address = '/dev/log'
@@ -132,7 +131,9 @@ def main():
                 address = (host, port)
             else:
                 address = syslog_address
-        handler = logging.handlers.SysLogHandler(address, facility=syslog.LOG_DAEMON, socktype=socktype)
+        handler = logging.handlers.SysLogHandler(
+            address, facility=logging.handlers.SysLogHandler.LOG_DAEMON, socktype=socktype
+        )
     else:
         handler = logging.handlers.WatchedFileHandler(log_path)
     fmt = logging.Formatter(logging.BASIC_FORMAT, None)
