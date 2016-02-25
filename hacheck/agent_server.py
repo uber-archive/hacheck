@@ -13,7 +13,7 @@ class AgentServer(TCPServer):
         service_name = (yield stream.read_until(b'\n')).decode('utf-8').rstrip().split('/', 1)[0]
         up, extra_info = spool.is_up(service_name)
         if up:
-            yield stream.write('up\n'.encode('ascii'))
+            yield stream.write('ready\n'.encode('ascii'))
         else:
             yield stream.write('maint\n'.encode('ascii'))
         stream.close()
