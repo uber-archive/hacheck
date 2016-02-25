@@ -68,7 +68,7 @@ class AgentServerTestCase(tornado.testing.AsyncTestCase):
             stream.set_server_data(b'server\n')
             yield self.server.handle_stream(stream, None)
             response = stream.get_client_data()
-            self.assertEqual(response, b'up\n')
+            self.assertEqual(response, b'ready\n')
 
     @tornado.testing.gen_test
     def test_basic_down(self):
