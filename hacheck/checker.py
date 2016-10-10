@@ -267,7 +267,7 @@ def check_redis_sentinel(service_name, port, query, io_loop, query_params, heade
         else:
             return (200, 'Sent PING, got back +PONG')
 
-    r = yield check_redis(port, io_loop, b'PING\r\n', b'\n', cb)
+    r = yield check_redis(port, b'PING\r\n', b'\n', cb)
     raise tornado.gen.Return(r)
 
 #
@@ -327,12 +327,12 @@ def gen_info_cb(is_sentinel, query, query_params):
 @tornado.gen.coroutine
 def check_redis_info(service_name, port, query, io_loop, query_params, headers):
     cb = gen_info_cb(False, query, query_params)
-    r = yield check_redis(port, io_loop, b'INFO\r\n', b'Keyspace', cb)
+    r = yield check_redis(port, b'INFO\r\n', b'Keyspace', cb)
     raise tornado.gen.Return(r)
 
 @cache.cached
 @tornado.gen.coroutine
 def check_sentinel_info(service_name, port, query, io_loop, query_params, headers):
     cb = gen_info_cb(True, query, query_params)
-    r = yield check_redis(port, io_loop, b'INFO\r\n', b'sentinels', cb)
+    r = yield check_redis(port, b'INFO\r\n', b'sentinels', cb)
     raise tornado.gen.Return(r)
