@@ -274,11 +274,14 @@ def check_redis_sentinel(service_name, port, query, io_loop, query_params, heade
 # Generate a callback for processing redis or sentinel INFO data.
 #
 def gen_info_cb(is_sentinel, query, query_params):
-    import urlparse
+    try:
+        from urllib.parse import parse_qs
+    except ImportError:
+        from urlparse import parse_qs
 
     mdict = {}
     if query == 'match':
-        mdict = urlparse.parse_qs(query_params)
+        mdict = parse_qs(query_params)
 
     def cb(data):
         info = {}
