@@ -212,7 +212,7 @@ def check_mysql(service_name, port, query, io_loop, query_params, headers):
 # until `readuntil' is seen and then processes the result using `callback'.
 #
 @tornado.gen.coroutine
-def check_redis(port, cmd, readuntil, callback):
+def check_redis(io_loop, port, cmd, readuntil, callback):
     stream = None
     connect_start = time.time()
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
@@ -267,7 +267,7 @@ def check_redis_sentinel(service_name, port, query, io_loop, query_params, heade
         else:
             return (200, 'Sent PING, got back +PONG')
 
-    r = yield check_redis(port, b'PING\r\n', b'\n', cb)
+    r = yield check_redis(io_loop, port, b'PING\r\n', b'\n', cb)
     raise tornado.gen.Return(r)
 
 #
@@ -327,12 +327,12 @@ def gen_info_cb(is_sentinel, query, query_params):
 @tornado.gen.coroutine
 def check_redis_info(service_name, port, query, io_loop, query_params, headers):
     cb = gen_info_cb(False, query, query_params)
-    r = yield check_redis(port, b'INFO\r\n', b'Keyspace', cb)
+    r = yield check_redis(io_loop, port, b'INFO\r\n', b'Keyspace', cb)
     raise tornado.gen.Return(r)
 
 @cache.cached
 @tornado.gen.coroutine
 def check_sentinel_info(service_name, port, query, io_loop, query_params, headers):
     cb = gen_info_cb(True, query, query_params)
-    r = yield check_redis(port, b'INFO\r\n', b'sentinels', cb)
+    r = yield check_redis(io_loop, port, b'INFO\r\n', b'sentinels', cb)
     raise tornado.gen.Return(r)
