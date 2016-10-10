@@ -209,10 +209,10 @@ def check_mysql(service_name, port, query, io_loop, query_params, headers):
 
 #
 # Check a Redis (or Sentinel) instance.  Sends `cmd' to `port', reads data
-# until `readuntil' is seen and then processes the result using `cb'.
+# until `readuntil' is seen and then processes the result using `callback'.
 #
 @tornado.gen.coroutine
-def check_redis(port, cmd, readuntil, procdata):
+def check_redis(port, cmd, readuntil, callback):
     stream = None
     connect_start = time.time()
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
@@ -232,7 +232,7 @@ def check_redis(port, cmd, readuntil, procdata):
                 def read_callback(data):
                     stream.close()
 
-                    r = procdata(data)
+                    r = callback(data)
                     redis_future.set_result(r)
 
                 stream.read_until(readuntil, read_callback)
@@ -246,7 +246,7 @@ def check_redis(port, cmd, readuntil, procdata):
             yield stream.write(cmd)
             data = yield stream.read_until(readuntil)
             stream.close()
-            raise tornado.gen.Return(proc_cb(data))
+            raise tornado.gen.Return(callback(data))
 
     except Timeout:
         raise tornado.gen.Return((
