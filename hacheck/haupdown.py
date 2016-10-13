@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 
+import codecs
 import contextlib
 import json
 import optparse
@@ -102,10 +103,11 @@ def main(default_action='list'):
 
     if opts.action == 'list':
         with contextlib.closing(urlopen(
-            'http://127.0.0.1:%d/recent' % opts.port,
+            'http://127.0.0.1:{0:d}/recent'.format(opts.port),
             timeout=3
         )) as f:
-            resp = json.load(f)
+            reader = codecs.getreader('utf-8')
+            resp = json.load(reader(f))
             for s in sorted(resp['seen_services']):
                 if isinstance(s, six.string_types):
                     print_s(s)
