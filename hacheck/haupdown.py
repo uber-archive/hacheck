@@ -40,6 +40,20 @@ def print_s(fmt_string, *formats):
     print(fmt_string % formats)
 
 
+def print_status(service_name, port, is_up, info_dict):
+    """Print a status line for a given service"""
+    if is_up:
+        print_s('UP\t%s', service_name)
+    else:
+        expiration = info_dict.get('expiration')
+        if expiration is None:
+            expiration = float('Inf')
+        if port is not None:
+            print_s('DOWN\t%f\t%s:%d\t%s', expiration, service_name, port, info_dict.get('reason', ''))
+        else:
+            print_s('DOWN\t%f\t%s\t%s', expiration, service_name, info_dict.get('reason', ''))
+
+
 def main(default_action='list'):
     ACTIONS = ('up', 'down', 'status', 'status_downed', 'list')
     parser = optparse.OptionParser(usage='%prog [options] service_name(s)')
@@ -62,6 +76,20 @@ def main(default_action='list'):
         type=str,
         default="",
         help='Reason string when setting down'
+    )
+    parser.add_option(
+        '-e',
+        '--expiration',
+        type=float,
+        default=None,
+        help='Expiration time (unix time) when setting down',
+    )
+    parser.add_option(
+        '-P',
+        '--service-port',
+        type=int,
+        default=None,
+        help='Port to check/set status for',
     )
     parser.add_option(
         '-p',
@@ -116,27 +144,25 @@ def main(default_action='list'):
     elif opts.action == 'up':
         hacheck.spool.configure(opts.spool_root, needs_write=True)
         for service_name in service_names:
-            hacheck.spool.up(service_name)
+            hacheck.spool.up(service_name, port=opts.service_port)
         return 0
     elif opts.action == 'down':
         hacheck.spool.configure(opts.spool_root, needs_write=True)
         for service_name in service_names:
-            hacheck.spool.down(service_name, opts.reason)
+            hacheck.spool.down(service_name, opts.reason, expiration=opts.expiration, port=opts.service_port)
         return 0
     elif opts.action == 'status_downed':
         hacheck.spool.configure(opts.spool_root, needs_write=False)
-        for service_name, info in hacheck.spool.status_all_down():
-            print_s('DOWN\t%s\t%s', service_name, info.get('reason', ''))
+        for service_name, port, info in hacheck.spool.status_all_down():
+            print_status(service_name, port, False, info)
         return 0
     else:
         hacheck.spool.configure(opts.spool_root, needs_write=False)
         rv = 0
         for service_name in service_names:
-            status, info = hacheck.spool.status(service_name)
-            if status:
-                print_s('UP\t%s', service_name)
-            else:
-                print_s('DOWN\t%s\t%s', service_name, info.get('reason', ''))
+            status, info = hacheck.spool.status(service_name, port=opts.service_port)
+            print_status(service_name, opts.service_port, status, info)
+            if not status:
                 rv = 1
         return rv
 

@@ -37,6 +37,7 @@ Imagine you want to take down the server `web01` for maintenance. Just SSH to it
 * `mysql_username`: username to use when logging into mysql for checks
 * `mysql_password`: password to use when logging into mysql for checks
 * `rlimit_nofile`: set the NOFILE rlimit. If the string "max", will set the rlimit to the hard rlimit; otherwise, will be interpreted as an integer and set to that value.
+* `allow_remote_spool_changes`: whether to allow remote control of spool files.
 
 ### Monitoring
 
