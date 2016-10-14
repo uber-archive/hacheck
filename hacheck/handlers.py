@@ -13,7 +13,7 @@ from . import checker
 
 log = logging.getLogger('hacheck')
 
-StatusResponse = collections.namedtuple('StatusResponse', ['code', 'remote_ip', 'ts'])
+StatusResponse = collections.namedtuple('StatusResponse', ['code', 'remote_ip', 'ts', 'failed_checker', 'message'])
 
 if hasattr(collections, 'Counter'):
     Counter = collections.Counter  # fast
@@ -87,7 +87,14 @@ class BaseServiceHandler(tornado.web.RequestHandler):
                 )
                 last_message = message
                 if code > 200:
-                    last_statuses[service_name] = StatusResponse(code, self.request.remote_ip, time.time())
+                    failed_checker_name = str(this_checker.__name__)
+                    if failed_checker_name.startswith('check_'):
+                        failed_checker_name = failed_checker_name[6:]
+                    last_statuses[service_name] = StatusResponse(
+                        code, self.request.remote_ip, time.time(),
+                        failed_checker=failed_checker_name,
+                        message=message,
+                    )
                     if code in tornado.httputil.responses:
                         self.set_status(code)
                     else:
@@ -96,7 +103,10 @@ class BaseServiceHandler(tornado.web.RequestHandler):
                     self.finish()
                     break
             else:
-                last_statuses[service_name] = StatusResponse(200, self.request.remote_ip, time.time())
+                last_statuses[service_name] = StatusResponse(
+                    200, self.request.remote_ip, time.time(),
+                    failed_checker=None, message=None
+                )
                 self.set_status(200)
                 self.write(last_message)
                 self.finish()
