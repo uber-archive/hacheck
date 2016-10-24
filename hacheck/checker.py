@@ -97,7 +97,8 @@ def check_http(service_name, port, check_path, io_loop, query_params, headers):
         path,
         method='GET',
         headers=headers_out,
-        request_timeout=TIMEOUT
+        request_timeout=TIMEOUT,
+        follow_redirects=False,
     )
     http_client = tornado.httpclient.AsyncHTTPClient(io_loop=io_loop)
     try:
