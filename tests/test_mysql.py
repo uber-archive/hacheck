@@ -3,8 +3,6 @@ try:
 except ImportError:
     from unittest import TestCase
 
-#import tornado.testing
-
 from hacheck import mysql
 
 

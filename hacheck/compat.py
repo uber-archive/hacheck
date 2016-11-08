@@ -57,6 +57,7 @@ def nested3(*managers):
 def bchr3(c):
     return bytes((c,))
 
+
 def bchr2(c):
     return chr(c)
 
