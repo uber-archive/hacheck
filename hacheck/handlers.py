@@ -76,7 +76,11 @@ class BaseServiceHandler(tornado.web.RequestHandler):
             port = int(port)
             last_message = ""
             querystr = self.request.query
-            for this_checker in self.CHECKERS:
+            if self.settings['check_spool']:
+                checkers = [checker.check_spool] + self.CHECKERS
+            else:
+                checkers = self.CHECKERS
+            for this_checker in checkers:
                 code, message = yield this_checker(
                     service_name,
                     port,
@@ -103,32 +107,32 @@ class BaseServiceHandler(tornado.web.RequestHandler):
 
 
 class SpoolServiceHandler(BaseServiceHandler):
-    CHECKERS = [checker.check_spool]
+    CHECKERS = []
 
 
 class HTTPServiceHandler(BaseServiceHandler):
-    CHECKERS = [checker.check_spool, checker.check_http]
+    CHECKERS = [checker.check_http]
 
 
 class HaproxyServiceHandler(BaseServiceHandler):
-    CHECKERS = [checker.check_spool, checker.check_haproxy]
+    CHECKERS = [checker.check_haproxy]
 
 
 class TCPServiceHandler(BaseServiceHandler):
-    CHECKERS = [checker.check_spool, checker.check_tcp]
+    CHECKERS = [checker.check_tcp]
 
 
 class MySQLServiceHandler(BaseServiceHandler):
-    CHECKERS = [checker.check_spool, checker.check_mysql]
+    CHECKERS = [checker.check_mysql]
 
 
 class RedisSentinelServiceHandler(BaseServiceHandler):
-    CHECKERS = [checker.check_spool, checker.check_redis_sentinel]
+    CHECKERS = [checker.check_redis_sentinel]
 
 
 class RedisInfoServiceHandler(BaseServiceHandler):
-    CHECKERS = [checker.check_spool, checker.check_redis_info]
+    CHECKERS = [checker.check_redis_info]
 
 
 class SentinelInfoServiceHandler(BaseServiceHandler):
-    CHECKERS = [checker.check_spool, checker.check_sentinel_info]
+    CHECKERS = [checker.check_sentinel_info]
