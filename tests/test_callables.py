@@ -9,6 +9,8 @@ from unittest import TestCase
 import hacheck.haupdown
 import hacheck.spool
 
+from six import BytesIO
+
 # can't use an actual mock.sentinel because it doesn't support string ops
 sentinel_service_name = 'testing_service_name'
 
@@ -68,17 +70,19 @@ class TestCallable(TestCase):
 
     def test_status_downed(self):
         with self.setup_wrapper() as (spooler, mock_print):
-            spooler.status_all_down.return_value = [(sentinel_service_name, {'service': sentinel_service_name, 'reason': ''})]
+            spooler.status_all_down.return_value = [
+                (sentinel_service_name, {'service': sentinel_service_name, 'reason': ''})
+            ]
             self.assertEqual(hacheck.haupdown.status_downed(), 0)
             mock_print.assert_called_once_with("DOWN\t%s\t%s", sentinel_service_name, mock.ANY)
 
     def test_list(self):
         with self.setup_wrapper() as (spooler, mock_print):
             with mock.patch.object(hacheck.haupdown, 'urlopen') as mock_urlopen:
-                mock_urlopen.return_value.read.return_value = json.dumps({
+                mock_urlopen.return_value = BytesIO(json.dumps({
                     "seen_services": ["foo"],
                     "threshold_seconds": 10,
-                })
+                }).encode('utf-8'))
                 self.assertEqual(hacheck.haupdown.halist(), 0)
                 mock_urlopen.assert_called_once_with('http://127.0.0.1:3333/recent', timeout=mock.ANY)
                 mock_print.assert_called_once_with("foo")
