@@ -1,4 +1,4 @@
-tornado>=3.0.1,<4.2
+tornado>=4.1,<=4.3
 futures
 PyYAML>=3.0
 six>=1.4.0
